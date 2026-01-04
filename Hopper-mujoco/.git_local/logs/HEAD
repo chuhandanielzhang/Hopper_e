@@ -1,0 +1,48 @@
+0000000000000000000000000000000000000000 ff0445d2f51bd679ff4f9abf791afb66f3a7ec5d Hopper Dev <hopper@local> 1765469422 +0800	commit (initial): Mode1 完整代码备份 - Raibert + Domain Randomization
+ff0445d2f51bd679ff4f9abf791afb66f3a7ec5d a0a8039b81844988cbc7c0e76e4e52db53108c78 Hopper Dev <hopper@local> 1765474754 +0800	commit: Phase 切换改为腿长方式（与 Hopper4.py 一致）
+a0a8039b81844988cbc7c0e76e4e52db53108c78 c37808131d46e22295c3a40997c9770001965d00 Hopper Dev <hopper@local> 1765476099 +0800	commit: 删除接触检测，仅保留腿长切换
+c37808131d46e22295c3a40997c9770001965d00 09a21c3db31227974615a1e012506b2b5c14f6f8 Hopper Dev <hopper@local> 1765477008 +0800	commit: Task1 参数优化完成 (7.00s, 0.299m/s)
+09a21c3db31227974615a1e012506b2b5c14f6f8 fa97e6b14c76fc9d0e71fb8424e4b06969bdc06b Hopper Dev <hopper@local> 1765478774 +0800	commit: 优化跳跃高度：最大高度 ≈ 1.0m
+fa97e6b14c76fc9d0e71fb8424e4b06969bdc06b 4df09422b185686a5d95f4e8f40f4a737697054d Hopper Dev <hopper@local> 1765479476 +0800	commit: 优化Task1姿态：Kpd 10→16
+4df09422b185686a5d95f4e8f40f4a737697054d 6e2e4b9e1b3f199d9e0dc0f056499fc744c6a7be Hopper Dev <hopper@local> 1765480131 +0800	commit: 录制对比：REAL vs EST 速度估计
+6e2e4b9e1b3f199d9e0dc0f056499fc744c6a7be 81e50e722a2c6710eea217bef2543297141a0d2f Hopper Dev <hopper@local> 1765480919 +0800	commit: Raibert落点改为Hopper4公式，并对齐期望速度坐标
+81e50e722a2c6710eea217bef2543297141a0d2f 4bad30d245fa3af290da49914f16f635dfdfe48b Hopper Dev <hopper@local> 1765481258 +0800	commit: 录制视频叠加 REAL/EST 速度显示
+4bad30d245fa3af290da49914f16f635dfdfe48b 2d46fbf7ee590fc3bcc96ce5194349c461336152 Hopper Dev <hopper@local> 1765481514 +0800	commit: 备份并复制：新增mode2(完整复制mode1)
+2d46fbf7ee590fc3bcc96ce5194349c461336152 8f9537d08d75f871e5f52bb57f6d1d07d119f31a Hopper Dev <hopper@local> 1765482161 +0800	commit: 融合SE3高层控制：三旋翼真实施加到MuJoCo，并与腿共享期望姿态
+8f9537d08d75f871e5f52bb57f6d1d07d119f31a b38676bf6cca0f28f976c7a6bf80deb8dd4998d0 Hopper Dev <hopper@local> 1765482330 +0800	commit: 录制Mode2 Task1
+b38676bf6cca0f28f976c7a6bf80deb8dd4998d0 78c87e538019b6170a8617fde6f740c027775ffd Hopper Dev <hopper@local> 1765482768 +0800	commit: 新增完整ESKF(EKF)高层状态估计：IMU+腿触地约束融合
+78c87e538019b6170a8617fde6f740c027775ffd 71de86bb0b9ed645b422ff5874265f74b4f1a5f9 Hopper Dev <hopper@local> 1765482907 +0800	commit: 启用EKF录制Mode2 Task1
+71de86bb0b9ed645b422ff5874265f74b4f1a5f9 346e03f0610502df5497842ae142c3fc0c556841 Hopper Dev <hopper@local> 1765482973 +0800	commit: 备份：更新Task0/Task1视频
+346e03f0610502df5497842ae142c3fc0c556841 136763e3deaf350d94c717f74bac8a2f6578cffb Hopper Dev <hopper@local> 1765483370 +0800	commit: 复制mode2到mode3
+136763e3deaf350d94c717f74bac8a2f6578cffb 93369622e2bff831b6a6045917151fcb5e8ea7e9 Hopper Dev <hopper@local> 1765483579 +0800	commit: 加入SRB/WBC高层外环：高度+速度收敛并共享期望姿态(leg_prop)
+93369622e2bff831b6a6045917151fcb5e8ea7e9 ff1ff9c8b2351dfbb1d4c1bca3772d1d5ba6e0de Hopper Dev <hopper@local> 1765484166 +0800	commit: 统一SRB动力学约束的WBC(高层): 用同一个约束计算腿(估计)与三旋翼残差补偿
+ff1ff9c8b2351dfbb1d4c1bca3772d1d5ba6e0de 8d08530f206a6ff084b03bdfaedf843fe26b4b0e Hopper Dev <hopper@local> 1765484857 +0800	commit: 论文式WBC(QP+约束)：OSQP求解统一SRB动力学(含摩擦锥/推力限幅)，stance腿不再用弹簧力
+8d08530f206a6ff084b03bdfaedf843fe26b4b0e 0e8323b371130b239e55e4947113fadb4e337031 Hopper Dev <hopper@local> 1765485065 +0800	commit: mode3: flight也不用弹簧腿，改为QP-WBC+摆腿控制
+0e8323b371130b239e55e4947113fadb4e337031 358868ddbe7300c08c64f4b0d1a35d08565e2a93 Hopper Dev <hopper@local> 1765485440 +0800	commit: 录制Mode3 Task1 (QP-WBC+EKF overlay)
+358868ddbe7300c08c64f4b0d1a35d08565e2a93 6b328153800aa901188a79c3926ec97a1b269558 Hopper Dev <hopper@local> 1765485811 +0800	commit: mode3: 以跳跃为主的外环(stance注入能量/flight小推力保姿态) + 更新mode3 task1录制
+6b328153800aa901188a79c3926ec97a1b269558 09510aa87f641c3e9275b98ecf474022da85316d Hopper Dev <hopper@local> 1765485969 +0800	commit: mode3: hop峰值高度参数化为1m(base) + 录制脚本输出最大高度
+09510aa87f641c3e9275b98ecf474022da85316d 3cac7598690361f62da181d7882ea58a39beb1a5 Hopper Dev <hopper@local> 1765487517 +0800	commit: mode3: 按MIT论文/讲义实现全身动力学WBC-QP(非SRB简化)
+3cac7598690361f62da181d7882ea58a39beb1a5 ed00f6e6fa80f9ddfddc026955fb11ad8bcc2cb1 Hopper Dev <hopper@local> 1765489035 +0800	commit: mode3: WBC接触约束改为Hopper4腿长判定(带滞回/去抖) + 增加slack权重配置
+ed00f6e6fa80f9ddfddc026955fb11ad8bcc2cb1 06c2644b560e58e2d568a4e4538ce3582128cf37 Hopper Dev <hopper@local> 1765489542 +0800	commit: mode3: 接触/相位判定完全对齐Hopper4腿长定义(x=X+[0,0,0.03])与阈值(0.02触地/0.005离地)
+06c2644b560e58e2d568a4e4538ce3582128cf37 17e0ff10fe300f25fb90b86f54dbab7d80105544 Hopper Dev <hopper@local> 1765490352 +0800	commit: mode3: 降低跳跃频率(最小周期门控) + flight保持腿长l0(不再Raibert摆腿)
+17e0ff10fe300f25fb90b86f54dbab7d80105544 bbcf1101ea0f1783e97589526d9c974ee0cca044 Hopper Dev <hopper@local> 1765490673 +0800	commit: mode3: phase/接触判定改为与mode2一致(直接用controller.state) + 视频叠加leg_len与l0验证原长
+bbcf1101ea0f1783e97589526d9c974ee0cca044 7a2005404b3992c2e75579f5df9b71fb6ccd59b3 Hopper Dev <hopper@local> 1765490996 +0800	commit: mode3: phase判断改为与mode2一致(腿长/滞回 controller.state)，不再用mujoco contact
+7a2005404b3992c2e75579f5df9b71fb6ccd59b3 ddaad10b944593fee04930ec089f3f4a259c0d60 Hopper Dev <hopper@local> 1765491170 +0800	commit: mode3: phase切换更像真实接触(更大滞回+速度门控+更长最小持续时间)
+ddaad10b944593fee04930ec089f3f4a259c0d60 0ad7aa78ae46914df42a0078dcfd8a81ff558e24 Hopper Dev <hopper@local> 1765491459 +0800	commit: phase切换阈值调到0.001(500Hz去抖) + contact验证叠加(mode3)
+0ad7aa78ae46914df42a0078dcfd8a81ff558e24 cfb6ffe1405e6e11355c11176486cdeb2a12e7c7 Hopper Dev <hopper@local> 1765496054 +0800	commit: pinocchio: 用URDF在仿真中跑真机化动力学链路 + mode3可切换后端
+cfb6ffe1405e6e11355c11176486cdeb2a12e7c7 fb733b4d6bae700cb8453ae126a11e919b9baf81 Hopper Dev <hopper@local> 1765497945 +0800	commit: wbc: QP加入基座角任务 + dyn-backend开关 + mode3录制默认mujoco
+fb733b4d6bae700cb8453ae126a11e919b9baf81 a0e2a507f9d9e000ded56b74694ccaf6c8a78900 Hopper Dev <hopper@local> 1765500018 +0800	commit: mode3 video overlay: 仅保留标题+VEL+RPY
+a0e2a507f9d9e000ded56b74694ccaf6c8a78900 cbcdf5e41cf0428fa4c7736c0221f59134e484ee Hopper Dev <hopper@local> 1765500339 +0800	commit: record: mode3 task1 按后端分文件名 (mujoco/pinocchio)
+cbcdf5e41cf0428fa4c7736c0221f59134e484ee 8c94e031232171352c1367e62fa92589dad54752 Hopper Dev <hopper@local> 1765502252 +0800	commit: task2: mode3 前进/倒退/左走 录制脚本 + 视频
+8c94e031232171352c1367e62fa92589dad54752 f665bf34b00ba9f32f00dab8a8a45276c31fddbb Hopper Dev <hopper@local> 1765503004 +0800	commit: default: mode3 动力学后端改为 pinocchio (可用则默认)
+f665bf34b00ba9f32f00dab8a8a45276c31fddbb f665bf34b00ba9f32f00dab8a8a45276c31fddbb Hopper Dev <hopper@local> 1765579355 +0800	reset: moving to HEAD
+f665bf34b00ba9f32f00dab8a8a45276c31fddbb afb036a94711befe1cdc088ae59d04494d5a7414 Hopper Dev <hopper@local> 1765581193 +0800	commit: fix: 恢复mode1/mode2 Task1稳定(相位阈值/期望速度符号/落脚点符号)
+afb036a94711befe1cdc088ae59d04494d5a7414 936c8bbbf8a08ecb6ee9180ff6960bdf427229ed Hopper Dev <hopper@local> 1765582585 +0800	commit: mode2 prop: SE3姿态控制 + 总推力<=0.10mg(仅姿态辅助)
+936c8bbbf8a08ecb6ee9180ff6960bdf427229ed e2b57872df3c671d79364f51cad22fdac1239141 Hopper Dev <hopper@local> 1765583457 +0800	commit: default: Task1录制默认用IMU+EKF闭环(喂给控制)
+e2b57872df3c671d79364f51cad22fdac1239141 a19229f467e5548db435169aa7f76746d79ca064 Hopper Dev <hopper@local> 1765594826 +0800	commit: ekf: contact gate用于stance更新 + 增强调试与逐秒验证
+a19229f467e5548db435169aa7f76746d79ca064 efddd57f79daed719f74aa6cc511e823a281e0ad Hopper Dev <hopper@local> 1765595080 +0800	commit: ekf: 真机化门控(不使用mujoco contact) + 接触伪测量幅值约束
+efddd57f79daed719f74aa6cc511e823a281e0ad efddd57f79daed719f74aa6cc511e823a281e0ad Hopper Dev <hopper@local> 1765612353 +0800	checkout: moving from master to backup/mode3_wbc_report_2025-12-13
+efddd57f79daed719f74aa6cc511e823a281e0ad 1eebf09e6d1dcbce242e4d41185b4d62cba38fc9 Hopper Dev <hopper@local> 1765612353 +0800	commit: backup: mode3 WBC (yaw-invariant attitude + stronger prop) + analysis scripts
+1eebf09e6d1dcbce242e4d41185b4d62cba38fc9 1d6127bf85a0269f993b0c4313ea21e1fa071d15 Hopper Dev <hopper@local> 1765612811 +0800	commit: docs: bilingual (CN/EN) full-reference Mode3 WBC PDF
+1d6127bf85a0269f993b0c4313ea21e1fa071d15 35665da352c82e7decf67ccf9f7e7e54c9629ab8 Hopper Dev <hopper@local> 1765613131 +0800	commit: docs: add explicit formula-to-code mapping snippets
+35665da352c82e7decf67ccf9f7e7e54c9629ab8 b79e6d75c484c4fd96a40c18ca71b1869cf56b0b Hopper Dev <hopper@local> 1765618086 +0800	commit: mode3: add tilt governor (<=15deg) by scaling xy accel + boosting attitude gains

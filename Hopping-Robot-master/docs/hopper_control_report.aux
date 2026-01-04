@@ -1,0 +1,34 @@
+\relax 
+\@writefile{toc}{\contentsline {section}{\numberline {1}Baseline: Raibert + Virtual Spring Only}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Raibert Foot Placement}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Virtual Spring and Side Force}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Attitude Loop (Hip Torque Only)}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}State Estimation (Horizontal Velocity)}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.5}飞行相速度预测（推进器 + KF 融合）}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Propeller 耦合方案}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}速度到姿态的前馈}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Mini Cheetah 躯干姿态误差}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Hip Torque / Propeller 分配（姿身一体）}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}支撑相能量/姿态耦合}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Mini Cheetah MPC 与 Raibert 共生}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}步骤一：建立 S2S 模型（源自 \texttt  {docs/mit} 第 3.2 节）}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}步骤二：搭建预测模型（源自 \texttt  {docs/mit} 第 3.3 节）}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}步骤三：构造 MPC 代价与约束（源自 \texttt  {docs/mit} 第 3.4 节）}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}步骤四：回接 Raibert + Propeller（对应 \texttt  {docs/mit} 第 4.3 节）}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}实施流程（基于 Hopper-master）}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}向全身力控升级}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}建立接触力参考}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}解耦腿/推进器力矩（参考 \texttt  {docs/mit} 第 4.5 节）}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}逐步切换策略}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Raibert + 全身力控融合（去虚拟弹簧）}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Raibert 参考转为 COM / 接触力}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}全身力控 QP 直接执行参考}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}实现策略（启发自 Mini Cheetah 4.4.1 / 4.5）}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}PogoX vs. Mini Cheetah 的 S2S 差异}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}状态/输入维度}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}模型来源}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}控制输出}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}执行方式}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}QP 层级}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}适用范围}{7}{}\protected@file@percent }
+\gdef \@abspage@last{7}

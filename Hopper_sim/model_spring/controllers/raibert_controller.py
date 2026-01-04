@@ -29,25 +29,26 @@ class RaibertController:
     def __init__(self):
         # ========== 虚拟弹簧参数（Task1 优化后）==========
         self.l0 = 0.464      # 腿自然长度
-        self.k = 1500        # 弹簧刚度（优化：1800→1500 降低高度）
-        self.b = 45          # 阻尼系数（优化：20→45 降低高度）
+        # Higher k for stable hopping (original Hopper4 used 1000)
+        self.k = 2500        # spring stiffness (N/m)
+        self.b = 25          # damping (N/(m/s))
         self.m = 3.23        # 机器人质量
-        self.h = 0.03        # 目标跳跃高度（优化：0.30→0.03 使最大高度≈1.0m）
+        self.h = 0.12        # target hop height (m)
         
-        # MuJoCo 串联腿在 shift=0 且加上 0.03m 偏移时长度约为 0.5953m
-        # 为了让串联腿等效到真实腿，需要减去固定偏移（0.5953 - 0.464 ≈ 0.1313）
-        self.leg_offset = 0.1313  # serial → physical 长度偏移
+        # MuJoCo 串联腿在 shift=0 时（足端 contact site），|X| ≈ 0.5953m。
+        # 控制里还会做 x = X + [0,0,0.03] 的 3cm 偏移，所以用于能量/弹簧计算的 l_serial ≈ 0.6253m。
+        # 为了让串联腿等效到真实腿 l0=0.464，需要减去固定偏移（0.6253 - 0.464 ≈ 0.1613）
+        self.leg_offset = 0.1613  # serial → physical 长度偏移（包含 3cm 偏移）
         
-        # ========== Raibert 足端放置增益（Task1 优化后）==========
-        # Task1 优化：7.00s 存活，0.299 m/s 速度
-        self.Kv = 0.08     # 速度前馈（优化：0.10→0.08）
-        self.Kr = 0.012    # 速度校正（优化：0.014→0.012）
+        # ========== Raibert 足端放置增益（原始 Hopper4 值）==========
+        self.Kv = 0.10     # 速度前馈
+        self.Kr = 0.09     # 速度校正
         self.Khp = 50        # 飞行阶段足端位置增益
-        self.Khd = 0.01      # 飞行阶段足端速度增益
+        self.Khd = 1.0       # flight foot velocity gain (damping)
         
         # ========== 能量环增益 ==========
         # Task1 优化：Kp=5.0 提供更好的速度响应
-        self.Kp = 1.0      # 能量补偿增益（优化：降低以达到1.0m高度）
+        self.Kp = 5.0      # energy injection gain
         
         # ========== Hip torque 姿态控制增益（优化后）==========
         # 姿态优化：Kpp=100, Kpd=10 → 前进时pitch≈14°
@@ -64,18 +65,19 @@ class RaibertController:
         self.lowLim = -1.04         # 关节下限
         # 力矩限制
         self.max_torque = 30        # Roll/Pitch 关节力矩限制 (增加以提供更强姿态控制)
-        self.max_shift_torque = 300 # Shift 关节力矩限制 (大幅增加以模拟 3 电机并联出力)
+        self.max_shift_torque = 600 # Shift 关节力矩限制 (increase for stronger push)
         
         # ========== 相位切换阈值 ==========
-        # Mode1/Mode2（仿真 Raibert 弹簧腿）需要更大的阈值来避免空中腿长波动导致误切换。
-        # 这组参数来自稳定的 Task1 配置（v1.2-task1-optimized）。
-        self.flight_to_stance_threshold = 0.08  # touchdown: l < l0 - thr
-        self.stance_to_flight_threshold = 0.02  # liftoff:  l > l0 + thr
+        # Phase switch thresholds (serial MuJoCo plant):
+        # The previous Task1 values were tuned for a different length mapping and were too conservative here,
+        # preventing touchdown detection -> no stance spring support -> the robot collapses.
+        self.flight_to_stance_threshold = 0.02  # touchdown: l < l0 - thr
+        self.stance_to_flight_threshold = 0.01  # liftoff:  l > l0 + thr
         self.Kpos = 0.0
         
         # ========== 相位切换去抖动 ==========
         # 最小保持时间（防止在阈值附近快速切换）
-        self.min_phase_duration = 50  # ~50ms @ 1kHz
+        self.min_phase_duration = 10  # ~20ms @ 500Hz (LCM demos)
         self.phase_duration_count = 0  # 当前相位持续计数
         
         # ========== 状态机 ==========

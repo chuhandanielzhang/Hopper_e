@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# MuJoCo
+MJDATA.TXT
+MJMODEL.TXT
+
+# Logs and temp files
+*.log
+*.npz
+*.png
+*.jpg
+hopper_log*
+optimized_params*
+outcmaes/
+
+# Keep videos but ignore large temp files
+*.mp4.tmp

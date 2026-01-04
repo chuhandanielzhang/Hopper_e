@@ -1,0 +1,290 @@
+"""
+MuJoCo 状态接口
+
+目标：输出与 Hopper4.py 控制器输入一致的状态
+
+关键点：
+1. Hopper4.py 的 X (foot_pos) 是在机体坐标系下，Z 正方向向上（足端在机体下方时 Z 为正）
+2. MuJoCo 的足端在机体下方时 Z 为负
+3. 需要进行坐标变换以匹配 Hopper4.py 的约定
+
+坐标系约定（与 Hopper4.py 一致）：
+- robot2vicon = [[1,0,0], [0,1,0], [0,0,-1]]
+- 这意味着 Hopper4.py 的 Z 轴与 MuJoCo 的 Z 轴方向相反
+"""
+
+import numpy as np
+import mujoco
+from scipy.spatial.transform import Rotation
+
+
+class MuJoCoInterface:
+    """
+    MuJoCo 仿真接口
+    
+    输出与 Hopper4.py 控制器输入一致的状态
+    """
+    
+    def __init__(self, model, data):
+        """
+        Args:
+            model: MuJoCo model
+            data: MuJoCo data
+        """
+        self.model = model
+        self.data = data
+        
+        # 关节名称到索引的映射
+        self.joint_names = ['Leg_Joint_Roll', 'Leg_Joint_Pitch', 'Leg_Joint_Shift']
+        self.actuator_names = ['roll_motor', 'pitch_motor', 'shift_motor']
+        
+        # 获取关节和执行器索引
+        self.joint_ids = []
+        for name in self.joint_names:
+            joint_id = model.joint(name).id
+            self.joint_ids.append(joint_id)
+        
+        self.actuator_ids = []
+        for name in self.actuator_names:
+            actuator_id = model.actuator(name).id
+            self.actuator_ids.append(actuator_id)
+        
+        # 足端 body 名称
+        self.foot_body_name = 'Foot_Link'
+        self.foot_body_id = model.body(self.foot_body_name).id
+        
+        # 基座 body 名称
+        self.base_body_name = 'base_link'
+        self.base_body_id = model.body(self.base_body_name).id
+
+        # Propeller 位置信息（机体坐标系），十字布局
+        self.prop_positions_body = np.array([
+            [0.000317, 0.569451, 0.0],
+            [0.493317, -0.284451, 0.0],
+            [-0.493634, -0.285000, 0.0]
+        ])
+        self.prop_spin_dirs = np.array([1.0, -1.0, 1.0])
+        # 旋翼推力方向：+Z（产生向上的升力）
+        self.prop_direction_body = np.array([0.0, 0.0, 1.0])
+        
+        # 坐标变换矩阵（与 Hopper4.py 一致）
+        # robot2vicon 翻转 Z 轴
+        self.robot2vicon = np.array([[1, 0, 0],
+                                     [0, 1, 0],
+                                     [0, 0, -1]])
+    
+    def get_state(self):
+        """
+        获取机器人状态（与 Hopper4.py 输入一致）
+        
+        Returns:
+            state: 字典，包含：
+                - body_pos: 机体位置（世界坐标系）
+                - body_quat: 机体四元数 [w, x, y, z]
+                - body_vel: 机体线速度（世界坐标系）
+                - body_ang_vel: 机体角速度（机体坐标系）
+                - body_rpy: 机体欧拉角
+                - joint_pos: 关节角度 [roll, pitch, shift]
+                - joint_vel: 关节速度
+                - foot_pos: 足端位置（机体坐标系，Z 正向上，与 Hopper4.py 一致）
+                - foot_vel: 足端速度（机体坐标系）
+                - imu_acc: IMU 加速度（机体坐标系）
+        """
+        # ========== 1. 获取关节状态 ==========
+        joint_pos = np.zeros(3)
+        joint_vel = np.zeros(3)
+        
+        for i, jid in enumerate(self.joint_ids):
+            qpos_adr = self.model.jnt_qposadr[jid]
+            qvel_adr = self.model.jnt_dofadr[jid]
+            joint_pos[i] = self.data.qpos[qpos_adr]
+            joint_vel[i] = self.data.qvel[qvel_adr]
+        
+        # ========== 2. 获取机体状态 ==========
+        # 位置（世界坐标系）
+        body_pos = self.data.qpos[0:3].copy()
+        
+        # 四元数：MuJoCo 格式是 [w, x, y, z]
+        body_quat = self.data.qpos[3:7].copy()
+        
+        # 速度（世界坐标系）
+        body_vel_world = self.data.qvel[0:3].copy()
+        
+        # 角速度（世界坐标系 -> 机体坐标系）
+        body_ang_vel_world = self.data.qvel[3:6].copy()
+        quat_scipy = [body_quat[1], body_quat[2], body_quat[3], body_quat[0]]
+        rot = Rotation.from_quat(quat_scipy)
+        body_ang_vel = rot.inv().apply(body_ang_vel_world)
+        
+        # 欧拉角
+        body_rpy = rot.as_euler('xyz')
+        
+        # ========== 3. 获取足端位置（机体坐标系）==========
+        # 使用四元数进行坐标转换（与 IMU 一致）
+        foot_pos_world = self.data.xpos[self.foot_body_id].copy()
+        base_pos_world = body_pos  # 使用 qpos 中的位置，与四元数一致
+        
+        foot_pos_rel = foot_pos_world - base_pos_world
+        # 使用四元数的逆将世界坐标系转换到机体坐标系
+        foot_pos_mujoco = rot.inv().apply(foot_pos_rel)
+        
+        # 转换到 Hopper4.py 约定：Z 轴翻转
+        # 在 Hopper4.py 中，足端在机体下方时 Z 为正
+        # 在 MuJoCo 中，足端在机体下方时 Z 为负
+        foot_pos = self.robot2vicon @ foot_pos_mujoco
+        
+        # ========== 4. 获取足端速度（机体坐标系）==========
+        # 使用四元数进行坐标转换
+        jacp = np.zeros((3, self.model.nv))
+        mujoco.mj_jacBody(self.model, self.data, jacp, None, self.foot_body_id)
+        foot_vel_world = jacp @ self.data.qvel
+        foot_vel_mujoco = rot.inv().apply(foot_vel_world)
+        
+        # 转换到 Hopper4.py 约定
+        foot_vel = self.robot2vicon @ foot_vel_mujoco
+        
+        # ========== 5. IMU 加速度 ==========
+        # 模拟 IMU：测量的是机体坐标系下的加速度（包含重力）
+        gravity_world = np.array([0, 0, -9.81])
+        imu_acc = rot.inv().apply(gravity_world)
+        
+        return {
+            'body_pos': body_pos,
+            'body_quat': body_quat,
+            'body_vel': body_vel_world,  # 世界坐标系，与 Hopper4.py 的 vel 一致
+            'body_ang_vel': body_ang_vel,
+            'body_rpy': body_rpy,
+            'joint_pos': joint_pos,
+            'joint_vel': joint_vel,
+            'foot_pos': foot_pos,  # Hopper4.py 约定
+            'foot_vel': foot_vel,  # Hopper4.py 约定
+            'imu_acc': imu_acc
+        }
+    
+    def set_torque(self, torque):
+        """
+        设置关节扭矩
+        
+        Args:
+            torque: 关节扭矩 [τ_roll, τ_pitch, τ_shift]
+        """
+        for i, aid in enumerate(self.actuator_ids):
+            self.data.ctrl[aid] = torque[i]
+    
+    def get_foot_contact(self):
+        """
+        检测足端是否接触地面
+        
+        Returns:
+            contact: True 如果足端接触地面
+        """
+        for i in range(self.data.ncon):
+            contact = self.data.contact[i]
+            geom1 = self.model.geom(contact.geom1).name
+            geom2 = self.model.geom(contact.geom2).name
+            
+            if ('foot_collision' in [geom1, geom2] or 'foot_visual' in [geom1, geom2]) and 'ground' in [geom1, geom2]:
+                return True
+        
+        return False
+    
+    def reset(self, init_height=0.8, init_shift=0.0):
+        """
+        重置机器人状态
+        
+        Args:
+            init_height: 初始高度 (m)
+            init_shift: 初始腿伸缩量 (m)
+        """
+        # 重置位置和姿态
+        self.data.qpos[0:3] = [0, 0, init_height]
+        self.data.qpos[3:7] = [1, 0, 0, 0]  # [w, x, y, z]
+        
+        # 重置速度
+        self.data.qvel[:] = 0
+        
+        # 重置关节
+        for i, jid in enumerate(self.joint_ids):
+            qpos_adr = self.model.jnt_qposadr[jid]
+            if i == 2:  # shift joint
+                self.data.qpos[qpos_adr] = init_shift
+            else:
+                self.data.qpos[qpos_adr] = 0
+        
+        # 重置控制
+        self.data.ctrl[:] = 0
+        
+        # 前向运动学更新
+        mujoco.mj_forward(self.model, self.data)
+
+    def apply_propeller_forces(self, thrusts, reaction_torques=None):
+        """
+        在 base_link 上施加三旋翼的等效合力/力矩
+        """
+        thrusts = np.asarray(thrusts, dtype=float)
+        if thrusts.shape != (3,):
+            raise ValueError("thrusts must be shape (3,)")
+
+        if reaction_torques is None:
+            reaction_torques = np.zeros(3)
+        else:
+            reaction_torques = np.asarray(reaction_torques, dtype=float)
+            if reaction_torques.shape != (3,):
+                raise ValueError("reaction_torques must be shape (3,)")
+
+        base_rot = self.data.xmat[self.base_body_id].reshape(3, 3)
+        total_force_world = np.zeros(3)
+        total_torque_world = np.zeros(3)
+
+        for thrust, torque_z, r_body in zip(thrusts, reaction_torques, self.prop_positions_body):
+            if thrust == 0.0 and torque_z == 0.0:
+                continue
+            force_body = self.prop_direction_body * thrust
+            torque_body = np.cross(r_body, force_body) + np.array([0.0, 0.0, torque_z])
+            total_force_world += base_rot @ force_body
+            total_torque_world += base_rot @ torque_body
+
+        self.data.xfrc_applied[self.base_body_id, 0:3] = total_force_world
+        self.data.xfrc_applied[self.base_body_id, 3:6] = total_torque_world
+
+    def clear_external_forces(self):
+        """清除 base_link 上的外力（用于禁用 propeller）"""
+        self.data.xfrc_applied[self.base_body_id, :] = 0.0
+
+
+class KeyboardTeleop:
+    """
+    键盘遥控器
+    """
+    
+    def __init__(self, step=0.1, max_speed=0.8):
+        self.step = step
+        self.max_speed = max_speed
+        self.vx = 0.0
+        self.vy = 0.0
+        self.running = True
+    
+    def process_key(self, key):
+        if key is None:
+            return self.get_velocity()
+        
+        key = key.lower()
+        
+        if key == 'y':
+            self.vx = min(self.vx + self.step, self.max_speed)
+        elif key == 'h':
+            self.vx = max(self.vx - self.step, -self.max_speed)
+        elif key == 'j':
+            self.vy = min(self.vy + self.step, self.max_speed)
+        elif key == 'g':
+            self.vy = max(self.vy - self.step, -self.max_speed)
+        elif key == ' ':
+            self.vx = 0.0
+            self.vy = 0.0
+        elif key == 'q':
+            self.running = False
+        
+        return self.get_velocity()
+    
+    def get_velocity(self):
+        return np.array([self.vx, self.vy, 1.0])

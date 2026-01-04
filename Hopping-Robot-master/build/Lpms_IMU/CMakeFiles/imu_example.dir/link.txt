@@ -1,0 +1,1 @@
+/usr/bin/c++  -w -O2 -O3 -O3 -DNDEBUG -rdynamic CMakeFiles/imu_example.dir/ImuWrapperExample.cpp.o -o imu_example   -L/usr/local/lib  -Wl,-rpath,/usr/local/lib libLpms_IMU.a -ludev 

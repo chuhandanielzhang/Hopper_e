@@ -1,0 +1,2 @@
+/usr/bin/ar qc libLpms_IMU.a CMakeFiles/Lpms_IMU.dir/src/ImuWrapper.cpp.o CMakeFiles/Lpms_IMU.dir/src/LpMatrix.c.o CMakeFiles/Lpms_IMU.dir/src/LpUtil.cpp.o CMakeFiles/Lpms_IMU.dir/src/LpmsIG1.cpp.o CMakeFiles/Lpms_IMU.dir/src/MicroMeasure.cpp.o CMakeFiles/Lpms_IMU.dir/src/SerialPortLinux.cpp.o
+/usr/bin/ranlib libLpms_IMU.a

@@ -1,0 +1,1 @@
+mode3: add tilt governor (<=15deg) by scaling xy accel + boosting attitude gains

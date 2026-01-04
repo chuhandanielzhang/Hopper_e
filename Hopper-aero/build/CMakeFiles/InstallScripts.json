@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/abc/Hopper/Hopper-aero/build/cmake_install.cmake",
+		"/home/abc/Hopper/Hopper-aero/build/xbox_driver/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

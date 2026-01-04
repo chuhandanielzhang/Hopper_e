@@ -402,16 +402,16 @@ class ModeEConfig:
     serial_foot_z_m: float = 0.5237      # Leg_Link to Foot_Link offset magnitude along -Z
 
     # stance horizontal regulation fallback (when MPC infeasible)
-    axy_damp: float = 0.5
+    axy_damp: float = 2.0  # increased for faster velocity convergence
     # Integral gain on horizontal velocity error (applied symmetrically to X and Y).
-    ki_xy: float = 1.0
-    v_int_max: float = 0.30
+    ki_xy: float = 3.0     # increased for faster velocity convergence
+    v_int_max: float = 0.50
     # Velocity fusion scaling (applied symmetrically to X and Y).
     # (Kept name for backward-compat.)
     v_fuse_vx_scale: float = 1.0
 
     # MPC velocity tracking weight (applied symmetrically to vx and vy).
-    mpc_w_vxy: float = 1
+    mpc_w_vxy: float = 5.0  # increased for faster velocity tracking
 
     # MPC
     mpc_dt: float = 0.02

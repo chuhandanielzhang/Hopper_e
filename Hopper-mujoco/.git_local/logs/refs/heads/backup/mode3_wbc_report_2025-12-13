@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 efddd57f79daed719f74aa6cc511e823a281e0ad Hopper Dev <hopper@local> 1765612353 +0800	branch: Created from HEAD
+efddd57f79daed719f74aa6cc511e823a281e0ad 1eebf09e6d1dcbce242e4d41185b4d62cba38fc9 Hopper Dev <hopper@local> 1765612353 +0800	commit: backup: mode3 WBC (yaw-invariant attitude + stronger prop) + analysis scripts
+1eebf09e6d1dcbce242e4d41185b4d62cba38fc9 1d6127bf85a0269f993b0c4313ea21e1fa071d15 Hopper Dev <hopper@local> 1765612811 +0800	commit: docs: bilingual (CN/EN) full-reference Mode3 WBC PDF
+1d6127bf85a0269f993b0c4313ea21e1fa071d15 35665da352c82e7decf67ccf9f7e7e54c9629ab8 Hopper Dev <hopper@local> 1765613131 +0800	commit: docs: add explicit formula-to-code mapping snippets
+35665da352c82e7decf67ccf9f7e7e54c9629ab8 b79e6d75c484c4fd96a40c18ca71b1869cf56b0b Hopper Dev <hopper@local> 1765618086 +0800	commit: mode3: add tilt governor (<=15deg) by scaling xy accel + boosting attitude gains

@@ -1,0 +1,100 @@
+\relax 
+\citation{raibert1984experiments}
+\citation{kalantari2020drivocopter}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{}\protected@file@percent }
+\newlabel{sec:introduction}{{1}{1}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}System Description}{2}{}\protected@file@percent }
+\newlabel{sec:system}{{2}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Robot Configuration}{2}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Robot Physical Parameters}}{2}{}\protected@file@percent }
+\newlabel{tab:params}{{1}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Dynamics Model}{2}{}\protected@file@percent }
+\newlabel{eq:linear_dynamics}{{2}{2}}
+\newlabel{eq:angular_dynamics}{{3}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Leg Jacobian}{2}{}\protected@file@percent }
+\newlabel{eq:jacobian}{{4}{2}}
+\citation{raibert1986legged}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Propeller Force Allocation Matrix}{3}{}\protected@file@percent }
+\newlabel{eq:prop_allocation}{{5}{3}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Raibert-Style Hopping Control}{3}{}\protected@file@percent }
+\newlabel{sec:raibert}{{3}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}State Machine}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Virtual Spring Model}{3}{}\protected@file@percent }
+\newlabel{eq:virtual_spring}{{6}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Energy-Based Hopping Height Control}{3}{}\protected@file@percent }
+\newlabel{eq:energy}{{7}{3}}
+\newlabel{eq:target_energy}{{8}{3}}
+\newlabel{eq:energy_compensation}{{9}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Raibert Foot Placement}{4}{}\protected@file@percent }
+\newlabel{eq:raibert_foot_placement}{{10}{4}}
+\newlabel{eq:foot_transform}{{11}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Hip Torque Attitude Control}{4}{}\protected@file@percent }
+\newlabel{eq:hip_attitude}{{12}{4}}
+\newlabel{eq:flight_hip}{{13}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Joint Torque Computation}{4}{}\protected@file@percent }
+\newlabel{eq:jacobian_torque}{{14}{4}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Whole Body Control with Quadratic Programming}{4}{}\protected@file@percent }
+\newlabel{sec:wbc}{{4}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Control Objectives}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Reference Generation}{5}{}\protected@file@percent }
+\newlabel{eq:leg_ref}{{15}{5}}
+\newlabel{eq:tau_ref}{{16}{5}}
+\newlabel{eq:attitude_error}{{17}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}QP Formulation}{5}{}\protected@file@percent }
+\newlabel{eq:qp}{{18}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Friction Cone Linearization}{6}{}\protected@file@percent }
+\newlabel{eq:friction_linear}{{19}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Phase-Dependent Constraints}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Torque Computation}{6}{}\protected@file@percent }
+\newlabel{eq:final_torque}{{20}{6}}
+\newlabel{eq:motor_speed}{{21}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Control Modes}{6}{}\protected@file@percent }
+\newlabel{sec:modes}{{5}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Mode 1: Leg Only (Raibert)}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Mode 2: Propeller Only (SE3)}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Mode 3: Leg + Propeller Attitude Assist}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Mode 4: Raibert + WBC Propeller Allocation}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Mode 5: Full 3D WBC}{7}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Control Mode Comparison}}{7}{}\protected@file@percent }
+\newlabel{tab:modes}{{2}{7}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Implementation Details}{8}{}\protected@file@percent }
+\newlabel{sec:implementation}{{6}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Coordinate Frame Conventions}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Yaw-Decoupled Control}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}QP Solver}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Safety Features}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Simulation Results}{8}{}\protected@file@percent }
+\newlabel{sec:results}{{7}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Simulation Setup}{9}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Hopping Performance}{9}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Hopping Performance by Control Mode}}{9}{}\protected@file@percent }
+\newlabel{tab:hopping_results}{{3}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Disturbance Rejection}{9}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Velocity Tracking}{9}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Energy Efficiency}{9}{}\protected@file@percent }
+\bibstyle{ieeetr}
+\bibcite{raibert1984experiments}{1}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Discussion}{10}{}\protected@file@percent }
+\newlabel{sec:discussion}{{8}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Trade-offs Between Modes}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Friction Cone Importance}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Yaw Control}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Computational Considerations}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{10}{}\protected@file@percent }
+\newlabel{sec:conclusion}{{9}{10}}
+\bibcite{raibert1986legged}{2}
+\bibcite{kalantari2020drivocopter}{3}
+\bibcite{wensing2016proprioceptive}{4}
+\bibcite{di2018dynamic}{5}
+\bibcite{bledt2018cheetah}{6}
+\bibcite{osqp}{7}
+\bibcite{lee2010geometric}{8}
+\bibcite{siciliano2010robotics}{9}
+\bibcite{todorov2012mujoco}{10}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Control Parameter Summary}{11}{}\protected@file@percent }
+\newlabel{app:params}{{A}{11}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Leg Jacobian Derivation}{11}{}\protected@file@percent }
+\newlabel{app:jacobian}{{B}{11}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Control Parameters by Mode}}{12}{}\protected@file@percent }
+\newlabel{tab:control_params}{{4}{12}}
+\gdef \@abspage@last{12}

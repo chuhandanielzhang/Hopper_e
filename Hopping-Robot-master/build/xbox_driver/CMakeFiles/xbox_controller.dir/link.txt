@@ -1,0 +1,2 @@
+/usr/bin/ar qc libxbox_controller.a CMakeFiles/xbox_controller.dir/src/xbox_controller.cpp.o
+/usr/bin/ranlib libxbox_controller.a

@@ -446,8 +446,14 @@ class HopperSimulation:
         self.est_vel_lpf_alpha = 0.2
         self._vel_control = np.zeros(3, dtype=float)
         
-        # 期望速度（向前走 demo）
-        self.desired_vel = np.array([0.1, 0.0])  # 向前 0.1 m/s
+        # Desired velocity command (m/s) in world XY.
+        # This can be overridden by demo schedules / teleop.
+        self.desired_vel = np.array([0.0, 0.0], dtype=float)
+
+        # Optional demo schedule: in-place -> forward -> in-place.
+        # When set, `record_video()` will override `self.desired_vel` based on sim-time.
+        # Format: (t_inplace_s, t_forward_s, t_inplace2_s, vx_forward_m_s, vy_forward_m_s)
+        self.demo_task_3s5s3s = None
         
         # 仿真参数
         self.dt = self.model.opt.timestep

@@ -1,0 +1,23 @@
+\relax 
+\@writefile{toc}{\contentsline {section}{\numberline {1}目标与约束（你现在的需求）}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}系统变量与符号（统一全篇口径）}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}坐标系与姿态}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}状态估计（仅 IMU+编码器）}{1}{}\protected@file@percent }
+\newlabel{sec:estimator}{{2.2}{1}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}将 ``compression / shooting'' 也纳入 QP 的核心思路}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}统一的 QP（或 SOCP）形式：每个控制周期求解一次}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}决策变量}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}等式约束：SRB wrench balance（可做软约束）}{2}{}\protected@file@percent }
+\newlabel{eq:srb_balance}{{1}{2}}
+\newlabel{eq:srb_moment}{{2}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}不等式约束（让解天然可行，而不是事后 clip）}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}代价函数（把 compression / shooting 变成权重调度）}{2}{}\protected@file@percent }
+\newlabel{eq:qp_cost}{{3}{2}}
+\@writefile{toc}{\contentsline {paragraph}{phase 里的差异只体现在：}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Reference generation（你现有逻辑的 ``专业版'' 写法）}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}高度与离地速度目标（解释 shooting 的物理意义）}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}水平速度与 Raibert 落脚}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}姿态参考与期望力矩}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}落地到代码的最小实施清单（按优先级）}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}你最终在论文里怎么写才显得专业}{3}{}\protected@file@percent }
+\gdef \@abspage@last{3}

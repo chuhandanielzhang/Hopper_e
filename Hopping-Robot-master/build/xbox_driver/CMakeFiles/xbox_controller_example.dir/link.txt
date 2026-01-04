@@ -1,0 +1,1 @@
+/usr/bin/c++  -w -O2 -O3 -O3 -DNDEBUG CMakeFiles/xbox_controller_example.dir/xbox_controller_example.cpp.o -o xbox_controller_example   -L/usr/local/lib  -Wl,-rpath,/usr/local/lib: -lrt -lpthread libxbox_controller.a -lrt -lpthread 
