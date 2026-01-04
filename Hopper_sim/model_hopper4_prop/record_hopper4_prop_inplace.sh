@@ -6,9 +6,9 @@ cd "$(dirname "$0")"
 OUT_DIR="$(cd .. && pwd)/videos"
 mkdir -p "$OUT_DIR"
 
-OUT_MP4="$OUT_DIR/hopper4_prop_inplace.mp4"
+OUT_MP4="$OUT_DIR/hopper4_prop_task_3s0_5s_fwd_3s0.mp4"
 
-echo "=== Hopper_sim / model_hopper4_prop: record Hopper4 PROP in-place hop ==="
+echo "=== Hopper_sim / model_hopper4_prop: record Hopper4 PROP demo (3s in-place, 5s forward, 3s in-place) ==="
 echo "Output: $OUT_MP4"
 
 # Clean up old processes (best-effort)
@@ -17,14 +17,16 @@ pkill -f run_hopper4_prop_sim.py 2>/dev/null || true
 pkill -f Hopper4.py 2>/dev/null || true
 sleep 1
 
-# Start MuJoCo fake robot (3RSR plant) + map PWM channels to match Hopper4's send_motor_command()
+# Start MuJoCo fake robot (serial plant; same MJCF as ModeE) + map PWM channels to match Hopper4's send_motor_command()
 # Hopper4 sends 3 PWMs on indices: 4,1,2 (others = 1000).
 python3 ../model_aero/mujoco_lcm_fake_robot.py \
   --arm \
   --realtime \
-  --model "$(cd .. && pwd)/mjcf/hopper_3rsr_parallel.xml" \
+  --model "$(cd .. && pwd)/mjcf/hopper_serial.xml" \
+  --q-sign 1 \
+  --q-offset 0 \
   --prop-pwm-idx-per-arm "4;1;2" \
-  --duration-s 10 \
+  --duration-s 11 \
   --record-mp4 "$OUT_MP4" \
   --hud \
   > /tmp/hopper_sim_hopper4_prop_mj.log 2>&1 &
@@ -32,8 +34,8 @@ MJ_PID=$!
 
 sleep 1
 
-# Start Hopper4 controller (props armed)
-python3 run_hopper4_prop_sim.py --duration-s 10 > /tmp/hopper_sim_hopper4_prop_ctl.log 2>&1 &
+# Start Hopper4 controller (props armed). Let the launcher stop it (avoids wall-time drift vs sim-time).
+python3 run_hopper4_prop_sim.py --duration-s 0 --vx-fwd 0.30 > /tmp/hopper_sim_hopper4_prop_ctl.log 2>&1 &
 CTL_PID=$!
 
 echo "Running... (MuJoCo PID=$MJ_PID, controller PID=$CTL_PID)"

@@ -11,7 +11,7 @@ A collection of **3 simulation models** for the Hopper robot, enabling compariso
 ```
 Hopper_sim/
 ├── hopper_lcm_types/               # LCM message definitions (Python generated code)
-├── mjcf/                           # MuJoCo models (serial + 3RSR) + meshes
+├── mjcf/                           # MuJoCo model (serial roll/pitch/shift) + meshes
 ├── videos/                         # Demo MP4 videos + thumbnails
 │
 ├── model_aero/                     # Model 1: ModeE + MuJoCo fake-robot (LCM)
@@ -48,7 +48,7 @@ cd Hopper_sim/model_aero
 bash record_modee_serial_inplace.sh
 ```
 
-Output: `Hopper_sim/videos/modee_serial_inplace.mp4`
+Output: `Hopper_sim/videos/modee_task_3s0_5s_fwd_3s0.mp4`
 
 **Manual Run** (two terminals):
 
@@ -79,7 +79,7 @@ cd Hopper_sim/model_spring
 bash record_hopper4_leg_inplace.sh
 ```
 
-Output: `Hopper_sim/videos/hopper4_leg_inplace.mp4`
+Output: `Hopper_sim/videos/hopper4_leg_task_3s0_5s_fwd_3s0.mp4`
 
 **Manual Run**:
 
@@ -106,7 +106,7 @@ cd Hopper_sim/model_hopper4_prop
 bash record_hopper4_prop_inplace.sh
 ```
 
-Output: `Hopper_sim/videos/hopper4_prop_inplace.mp4`
+Output: `Hopper_sim/videos/hopper4_prop_task_3s0_5s_fwd_3s0.mp4`
 
 **Manual Run**:
 
@@ -136,7 +136,7 @@ pip install mujoco
 ## 🔗 Related Projects
 
 - **Hopper-aero**: Real robot control code (source of ModeE controller)
-- **Hopper-mujoco**: Original MuJoCo models (3RSR/serial MJCF)
+- **Hopper-mujoco**: Original MuJoCo models (serial MJCF)
 
 ## 📚 References
 
@@ -148,20 +148,20 @@ pip install mujoco
 
 ## 🎬 Demo Videos
 
-### Model 1 — ModeE (Serial) In-Place Hop
+### Model 1 — ModeE (Serial) Demo (3s in-place → 5s forward → 3s in-place)
 
-[![ModeE serial](videos/modee_serial_inplace_thumb.png)](videos/modee_serial_inplace.mp4)
-
-**Click the thumbnail to play the video.**
-
-### Model 2 — Hopper4 LEG-only In-Place Hop
-
-[![Hopper4 leg-only](videos/hopper4_leg_inplace_thumb.png)](videos/hopper4_leg_inplace.mp4)
+[![ModeE serial](videos/modee_task_3s0_5s_fwd_3s0_thumb.png)](videos/modee_task_3s0_5s_fwd_3s0.mp4)
 
 **Click the thumbnail to play the video.**
 
-### Model 3 — Hopper4 PROP In-Place Hop
+### Model 2 — Hopper4 LEG-only Demo (3s in-place → 5s forward → 3s in-place)
 
-[![Hopper4 prop](videos/hopper4_prop_inplace_thumb.png)](videos/hopper4_prop_inplace.mp4)
+[![Hopper4 leg-only](videos/hopper4_leg_task_3s0_5s_fwd_3s0_thumb.png)](videos/hopper4_leg_task_3s0_5s_fwd_3s0.mp4)
+
+**Click the thumbnail to play the video.**
+
+### Model 3 — Hopper4 PROP Demo (3s in-place → 5s forward → 3s in-place)
+
+[![Hopper4 prop](videos/hopper4_prop_task_3s0_5s_fwd_3s0_thumb.png)](videos/hopper4_prop_task_3s0_5s_fwd_3s0.mp4)
 
 **Click the thumbnail to play the video.**

@@ -6,9 +6,9 @@ cd "$(dirname "$0")"
 OUT_DIR="$(cd .. && pwd)/videos"
 mkdir -p "$OUT_DIR"
 
-OUT_MP4="$OUT_DIR/modee_serial_inplace.mp4"
+OUT_MP4="$OUT_DIR/modee_task_3s0_5s_fwd_3s0.mp4"
 
-echo "=== Hopper_sim / model_aero: record ModeE (serial) in-place hop ==="
+echo "=== Hopper_sim / model_aero: record ModeE (serial) demo (3s in-place, 5s forward, 3s in-place) ==="
 echo "Output: $OUT_MP4"
 
 # Clean up old processes (best-effort)
@@ -23,15 +23,18 @@ python3 mujoco_lcm_fake_robot.py \
   --model "$(cd .. && pwd)/mjcf/hopper_serial.xml" \
   --q-sign 1 \
   --q-offset 0 \
-  --hold-level-s 1.0 \
+  --hold-level-s 0.0 \
   --fake-gamepad \
   --fake-gamepad-y-once \
   --cmd-vx0 0.0 \
   --cmd-vy0 0.0 \
-  --cmd-vx1 0.0 \
+  --cmd-vx1 0.30 \
   --cmd-vy1 0.0 \
-  --cmd-switch-after-s 9999 \
-  --duration-s 10 \
+  --cmd-switch-after-s 3.0 \
+  --cmd-vx2 0.0 \
+  --cmd-vy2 0.0 \
+  --cmd-switch2-after-s 8.0 \
+  --duration-s 11 \
   --record-mp4 "$OUT_MP4" \
   --hud \
   > /tmp/hopper_sim_modee_mj.log 2>&1 &

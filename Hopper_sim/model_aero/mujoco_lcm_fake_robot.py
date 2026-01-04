@@ -373,6 +373,14 @@ def main() -> None:
     ap.add_argument("--cmd-vx1", type=float, default=0.30, help="Desired vx (m/s) after switch.")
     ap.add_argument("--cmd-vy1", type=float, default=0.0, help="Desired vy (m/s) after switch.")
     ap.add_argument("--cmd-switch-after-s", type=float, default=5.0, help="Switch to (vx1,vy1) this many seconds AFTER release.")
+    ap.add_argument("--cmd-vx2", type=float, default=0.0, help="Desired vx (m/s) after second switch (optional).")
+    ap.add_argument("--cmd-vy2", type=float, default=0.0, help="Desired vy (m/s) after second switch (optional).")
+    ap.add_argument(
+        "--cmd-switch2-after-s",
+        type=float,
+        default=1.0e9,
+        help="Second switch time (s AFTER release) to (vx2,vy2). Set huge to disable.",
+    )
     ap.add_argument("--cmd-ramp-s", type=float, default=0.6, help="Smooth ramp duration (s) for vx/vy change.")
     ap.add_argument(
         "--init-motor-deg",
@@ -734,6 +742,9 @@ def main() -> None:
     cmd_vx1 = float(getattr(args, "cmd_vx1", 0.30))
     cmd_vy1 = float(getattr(args, "cmd_vy1", 0.0))
     cmd_switch_after = float(max(0.0, float(getattr(args, "cmd_switch_after_s", 5.0))))
+    cmd_vx2 = float(getattr(args, "cmd_vx2", 0.0))
+    cmd_vy2 = float(getattr(args, "cmd_vy2", 0.0))
+    cmd_switch2_after = float(max(0.0, float(getattr(args, "cmd_switch2_after_s", 1.0e9))))
     cmd_ramp = float(max(1e-6, float(getattr(args, "cmd_ramp_s", 0.6))))
     vx_cmd = 0.0
     vy_cmd = 0.0
@@ -748,8 +759,8 @@ def main() -> None:
     while True:
         loop_t0 = float(time.time())
 
-        # Stop condition
-        if float(args.duration_s) > 0.0 and (float(time.time()) - t0) >= float(args.duration_s):
+        # Stop condition (SIM time). This keeps demo timing consistent even if rendering/recording is slow.
+        if float(args.duration_s) > 0.0 and float(sim_t) >= float(args.duration_s):
             break
 
         # Drain inbound LCM packets (non-blocking)
@@ -827,17 +838,31 @@ def main() -> None:
 
         # Synthetic gamepad command profile:
         # - During HOLD: publish vx/vy (default 0) so the controller is already "alive".
-        # - After RELEASE: start with (vx0,vy0), then at t=cmd_switch_after ramp to (vx1,vy1).
+        # - After RELEASE: start with (vx0,vy0),
+        #   then at t=cmd_switch_after ramp to (vx1,vy1),
+        #   then at t=cmd_switch2_after ramp to (vx2,vy2) (optional; disable with huge cmd_switch2_after).
         t_after_release = float(max(0.0, float(sim_t) - float(release_sim_t)))
-        if t_after_release < float(cmd_switch_after):
+        # Ensure ordering (backward compatible): if cmd_switch2_after <= cmd_switch_after, disable the second switch.
+        t_sw1 = float(cmd_switch_after)
+        t_sw2 = float(cmd_switch2_after)
+        if t_sw2 <= t_sw1 + 1e-9:
+            t_sw2 = 1.0e9
+
+        if t_after_release < float(t_sw1):
             vx_cmd = float(cmd_vx0)
             vy_cmd = float(cmd_vy0)
-        else:
-            u = float((t_after_release - float(cmd_switch_after)) / float(cmd_ramp))
+        elif t_after_release < float(t_sw2):
+            u = float((t_after_release - float(t_sw1)) / float(cmd_ramp))
             u = float(np.clip(u, 0.0, 1.0))
             u = float(u * u * (3.0 - 2.0 * u))  # smoothstep
             vx_cmd = float((1.0 - u) * float(cmd_vx0) + u * float(cmd_vx1))
             vy_cmd = float((1.0 - u) * float(cmd_vy0) + u * float(cmd_vy1))
+        else:
+            u = float((t_after_release - float(t_sw2)) / float(cmd_ramp))
+            u = float(np.clip(u, 0.0, 1.0))
+            u = float(u * u * (3.0 - 2.0 * u))  # smoothstep
+            vx_cmd = float((1.0 - u) * float(cmd_vx1) + u * float(cmd_vx2))
+            vy_cmd = float((1.0 - u) * float(cmd_vy1) + u * float(cmd_vy2))
 
         stick_x = float(np.clip(vx_cmd / gp_max_v, -1.0, 1.0))
         stick_y = float(np.clip(vy_cmd / gp_max_v, -1.0, 1.0))
