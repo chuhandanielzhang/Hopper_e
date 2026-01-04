@@ -18,22 +18,24 @@ pkill -f Hopper4.py 2>/dev/null || true
 sleep 1
 
 # Start MuJoCo fake robot (serial plant; same MJCF as ModeE)
+# --hold-level-s 3.0: hold robot level for 3s before releasing (let controller start)
 python3 ../model_aero/mujoco_lcm_fake_robot.py \
   --arm \
   --realtime \
   --model "$(cd .. && pwd)/mjcf/hopper_serial.xml" \
   --q-sign 1 \
   --q-offset 0 \
-  --duration-s 11 \
+  --hold-level-s 3.0 \
+  --duration-s 14 \
   --record-mp4 "$OUT_MP4" \
   --hud \
   > /tmp/hopper_sim_hopper4_leg_mj.log 2>&1 &
 MJ_PID=$!
 
-sleep 1
+sleep 0.3
 
 # Start Hopper4 controller (leg only). Let the launcher stop it (avoids wall-time drift vs sim-time).
-python3 run_hopper4_leg_sim.py --duration-s 0 --vx-fwd 0.30 > /tmp/hopper_sim_hopper4_leg_ctl.log 2>&1 &
+python3 run_hopper4_leg_sim.py --duration-s 0 --vx-fwd 0.20 > /tmp/hopper_sim_hopper4_leg_ctl.log 2>&1 &
 CTL_PID=$!
 
 echo "Running... (MuJoCo PID=$MJ_PID, controller PID=$CTL_PID)"

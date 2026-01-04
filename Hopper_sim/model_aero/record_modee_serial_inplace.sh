@@ -17,24 +17,25 @@ pkill -f run_modee.py 2>/dev/null || true
 sleep 1
 
 # Start MuJoCo fake robot (serial plant)
+# --hold-level-s 3.0: hold robot level for 3s before releasing (let controller start)
 python3 mujoco_lcm_fake_robot.py \
   --arm \
   --realtime \
   --model "$(cd .. && pwd)/mjcf/hopper_serial.xml" \
   --q-sign 1 \
   --q-offset 0 \
-  --hold-level-s 0.0 \
+  --hold-level-s 3.0 \
   --fake-gamepad \
   --fake-gamepad-y-once \
   --cmd-vx0 0.0 \
   --cmd-vy0 0.0 \
   --cmd-vx1 0.30 \
   --cmd-vy1 0.0 \
-  --cmd-switch-after-s 3.0 \
+  --cmd-switch-after-s 6.0 \
   --cmd-vx2 0.0 \
   --cmd-vy2 0.0 \
-  --cmd-switch2-after-s 8.0 \
-  --duration-s 11 \
+  --cmd-switch2-after-s 11.0 \
+  --duration-s 14 \
   --record-mp4 "$OUT_MP4" \
   --hud \
   > /tmp/hopper_sim_modee_mj.log 2>&1 &
