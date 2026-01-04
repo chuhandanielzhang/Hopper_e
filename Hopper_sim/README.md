@@ -1,36 +1,23 @@
 # Hopper_sim
 
-Hopper 机器人仿真环境集合（**3 个模型**），用于复现/对比：
+A collection of **3 simulation models** for the Hopper robot, enabling comparison and reproduction of different control strategies:
 
-- **ModeE (Hopper-aero / LCM)**：MuJoCo 里跑“假机器人”进程，通过 LCM 跑真实 ModeE 控制器（本仓库内拷贝，独立可运行）。
-- **Hopper4 LEG-only (LCM)**：Hopper4 虚拟弹簧 + Raibert（只用腿，不启用螺旋桨）。
-- **Hopper4 PROP (LCM)**：Hopper4 介入螺旋桨（自动 ARM，飞行段姿态 PD + 分配）。
+1. **ModeE (Hopper-aero / LCM)**: Runs the real ModeE controller (from `Hopper-aero`) against a MuJoCo "fake robot" process via LCM communication.
+2. **Hopper4 LEG-only (LCM)**: Hopper4 virtual spring + Raibert controller (legs only, propellers disabled).
+3. **Hopper4 PROP (LCM)**: Hopper4 controller with propeller assistance (auto-armed, attitude PD control + thrust allocation during flight).
 
-## 🎬 Demo 视频（README 可直接点开）
-
-- **Model 1 — ModeE (serial) in-place hop**
-
-[![ModeE serial](videos/modee_serial_inplace_thumb.png)](videos/modee_serial_inplace.mp4)
-
-- **Model 2 — Hopper4 LEG-only in-place hop**
-
-[![Hopper4 leg-only](videos/hopper4_leg_inplace_thumb.png)](videos/hopper4_leg_inplace.mp4)
-
-- **Model 3 — Hopper4 PROP in-place hop**
-
-[![Hopper4 prop](videos/hopper4_prop_inplace_thumb.png)](videos/hopper4_prop_inplace.mp4)
-
-## 📁 目录结构
+## 📁 Directory Structure
 
 ```
 Hopper_sim/
-├── hopper_lcm_types/               # LCM 消息定义（Python 生成代码）
-├── mjcf/                           # MuJoCo 模型（serial + 3RSR）+ meshes
-├── videos/                         # README 展示用 MP4 + 缩略图
+├── hopper_lcm_types/               # LCM message definitions (Python generated code)
+├── mjcf/                           # MuJoCo models (serial + 3RSR) + meshes
+├── videos/                         # Demo MP4 videos + thumbnails
 │
 ├── model_aero/                     # Model 1: ModeE + MuJoCo fake-robot (LCM)
 │   ├── mujoco_lcm_fake_robot.py
 │   ├── run_modee.py
+│   ├── modee/                      # ModeE controller code (self-contained)
 │   └── record_modee_serial_inplace.sh
 │
 ├── model_spring/                   # Model 2: Hopper4 LEG-only (LCM)
@@ -44,76 +31,137 @@ Hopper_sim/
     └── record_hopper4_prop_inplace.sh
 ```
 
-## 🚀 Model 1: `model_aero`（ModeE / serial fixed）
+## 🚀 Model 1: `model_aero` (ModeE Controller)
 
-### 一键录制（推荐）
+**Description**: This model runs the **real ModeE controller** (from `Hopper-aero`) in a closed-loop simulation. A MuJoCo process (`mujoco_lcm_fake_robot.py`) emulates the robot hardware and communicates with the controller via LCM, exactly as the real robot would.
+
+**Key Features**:
+- **SRB-MPC** (Single Rigid Body Model Predictive Control) for stance phase ground reaction force generation
+- **WBC-QP** (Whole-Body Control Quadratic Program) for force/torque allocation
+- **Raibert-style foot placement (S2S)** for velocity control
+- **Serial-equivalent leg model** (Roll/Pitch/Shift joints) with correct LCM mapping
+
+**Quick Start**:
 
 ```bash
 cd Hopper_sim/model_aero
 bash record_modee_serial_inplace.sh
 ```
 
-输出会写到：
+Output: `Hopper_sim/videos/modee_serial_inplace.mp4`
 
-- `Hopper_sim/videos/modee_serial_inplace.mp4`
-
-### 手动运行（两个终端）
+**Manual Run** (two terminals):
 
 ```bash
-# Terminal A
+# Terminal A: MuJoCo fake robot
 cd Hopper_sim/model_aero
-python3 mujoco_lcm_fake_robot.py --arm --viewer
+python3 mujoco_lcm_fake_robot.py --arm --viewer --model ../mjcf/hopper_serial.xml --q-sign 1 --q-offset 0 --leg-model serial --tau-out-max 2500
 
-# Terminal B
+# Terminal B: ModeE controller
 cd Hopper_sim/model_aero
 python3 run_modee.py --leg-model serial --tau-out-max 2500
 ```
 
-## 🦵 Model 2: `model_spring`（Hopper4 LEG-only / LCM）
+## 🦵 Model 2: `model_spring` (Hopper4 LEG-only)
 
-### 一键录制
+**Description**: This model runs the **Hopper4 virtual spring controller** with Raibert-style foot placement, but **propellers are disabled**. The robot relies solely on leg dynamics for hopping.
+
+**Key Features**:
+- **Virtual spring + energy injection** during stance compression/extension
+- **Raibert controller** for horizontal velocity control via foot placement
+- **Foot-space PD control** during flight for leg trajectory tracking
+- **No propeller assistance** (pure leg dynamics)
+
+**Quick Start**:
 
 ```bash
 cd Hopper_sim/model_spring
 bash record_hopper4_leg_inplace.sh
 ```
 
-输出会写到：
+Output: `Hopper_sim/videos/hopper4_leg_inplace.mp4`
 
-- `Hopper_sim/videos/hopper4_leg_inplace.mp4`
+**Manual Run**:
 
-## 🚁 Model 3: `model_hopper4_prop`（Hopper4 PROP / LCM）
+```bash
+cd Hopper_sim/model_spring
+python3 run_hopper4_leg_sim.py
+```
 
-### 一键录制
+## 🚁 Model 3: `model_hopper4_prop` (Hopper4 with Propellers)
+
+**Description**: This model runs the **Hopper4 controller with propeller assistance**. Propellers are automatically armed and provide roll/pitch attitude control during flight, while the leg controller handles stance and foot placement.
+
+**Key Features**:
+- **Virtual spring + energy injection** (same as Model 2)
+- **Raibert controller** for horizontal velocity control
+- **Propeller roll/pitch PD control** during flight
+- **Thrust allocation** via inverse mixing matrix (`A_inv`)
+- **PWM mapping** based on `k_thrust` square-root relationship
+
+**Quick Start**:
 
 ```bash
 cd Hopper_sim/model_hopper4_prop
 bash record_hopper4_prop_inplace.sh
 ```
 
-输出会写到：
+Output: `Hopper_sim/videos/hopper4_prop_inplace.mp4`
 
-- `Hopper_sim/videos/hopper4_prop_inplace.mp4`
+**Manual Run**:
 
-## 📝 依赖
+```bash
+cd Hopper_sim/model_hopper4_prop
+python3 run_hopper4_prop_sim.py
+```
 
-### 共同依赖
+## 📝 Dependencies
+
+### Common Requirements
 - Python 3.8+
 - NumPy
-- MuJoCo Python bindings
+- MuJoCo Python bindings (`mujoco`)
 - LCM (Lightweight Communications and Marshalling)
 
-### 说明
-- `Hopper_sim/videos/` 里的 MP4 很小（用于 README 展示），可以直接 commit 到 GitHub。
+### Installation
 
-## 🔗 相关项目
+```bash
+# Install MuJoCo
+pip install mujoco
 
-- **Hopper-aero**: 真机控制代码（ModeE 原始来源）
-- **Hopper-mujoco**: 3RSR/serial MJCF 来源
+# Install LCM (if not already installed)
+# See: https://lcm-proj.github.io/lcm/
+```
 
-## 📚 参考
+## 🔗 Related Projects
 
-- Raibert 控制器论文
+- **Hopper-aero**: Real robot control code (source of ModeE controller)
+- **Hopper-mujoco**: Original MuJoCo models (3RSR/serial MJCF)
+
+## 📚 References
+
+- Raibert, M. H. (1986). *Legged Robots That Balance*. MIT Press.
 - Mini Cheetah MPC + Raibert Heuristics
 - PogoX: Parallel Leg Hopping Robot
 
+---
+
+## 🎬 Demo Videos
+
+### Model 1 — ModeE (Serial) In-Place Hop
+
+[![ModeE serial](videos/modee_serial_inplace_thumb.png)](videos/modee_serial_inplace.mp4)
+
+**Click the thumbnail to play the video.**
+
+### Model 2 — Hopper4 LEG-only In-Place Hop
+
+[![Hopper4 leg-only](videos/hopper4_leg_inplace_thumb.png)](videos/hopper4_leg_inplace.mp4)
+
+**Click the thumbnail to play the video.**
+
+### Model 3 — Hopper4 PROP In-Place Hop
+
+[![Hopper4 prop](videos/hopper4_prop_inplace_thumb.png)](videos/hopper4_prop_inplace.mp4)
+
+**Click the thumbnail to play the video.**
