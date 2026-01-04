@@ -429,6 +429,16 @@ class ModeEConfig:
     pwm_min_us: float = 1000.0
     pwm_max_us: float = 1300.0
 
+    # ===== Propeller PWM mapping method =====
+    # If True: use Hopper4-style k_thrust square-root relationship (pwm = 1000 + sqrt(thrust / k_thrust))
+    # If False: use MotorTableModel lookup table (interpolation from measured data)
+    use_hopper4_pwm_mapping: bool = False
+    # Hopper4 thrust coefficient (N per (pwm_delta)^2, where pwm_delta = pwm - 1000)
+    # Default from Hopper4: k_thrust = 1.47e-4
+    # Formula: thrust = k_thrust * (pwm - 1000)^2
+    # Inverse: pwm = 1000 + sqrt(thrust / k_thrust)
+    prop_k_thrust: float = 1.47e-4
+
     # Use FC quaternion directly (recommended for real robot) vs. re-estimate from gyro+acc
     use_fc_quat: bool = True
 
@@ -560,10 +570,16 @@ class ModeECore:
         )
 
         # motor PWM map (thrust->PWM)
-        self.motor_table = MotorTableModel.default_from_table()
-        # Clamp to FC configured range if needed
-        self.motor_table.pwm_min_us = float(cfg.pwm_min_us)
-        self.motor_table.pwm_max_us = float(cfg.pwm_max_us)
+        self.use_hopper4_pwm = bool(cfg.use_hopper4_pwm_mapping)
+        self.prop_k_thrust = float(cfg.prop_k_thrust)
+        if not bool(self.use_hopper4_pwm):
+            # Use lookup table (MotorTableModel) when Hopper4 mapping is disabled
+            self.motor_table = MotorTableModel.default_from_table()
+            # Clamp to FC configured range if needed
+            self.motor_table.pwm_min_us = float(cfg.pwm_min_us)
+            self.motor_table.pwm_max_us = float(cfg.pwm_max_us)
+        else:
+            self.motor_table = None
 
         # attitude estimator
         self.att = SimpleIMUAttitudeEstimator(kp_acc=0.6, acc_g_min=0.90, acc_g_max=1.10, acc_lpf_tau=0.25)
@@ -1978,7 +1994,43 @@ class ModeECore:
             t_each = float(thrusts[arm_i]) / float(len(idxs))
             for k in idxs:
                 thrust_motor[int(k)] = t_each
-        pwm_us = self.motor_table.pwm_from_thrust(thrust_motor).astype(float).reshape(6)
+        
+        # Convert thrust to PWM using selected method
+        if bool(self.use_hopper4_pwm):
+            # Hopper4-style: pwm = 1000 + sqrt(thrust / k_thrust)
+            pwm_us = np.zeros(6, dtype=float)
+            for i in range(6):
+                thrust_i = float(thrust_motor[i])
+                if thrust_i <= 0.0:
+                    pwm_us[i] = float(self.cfg.pwm_min_us)
+                else:
+                    k = float(self.prop_k_thrust)
+                    if k > 1e-12:
+                        pwm_delta = float(math.sqrt(thrust_i / k))
+                        pwm_us[i] = float(self.cfg.pwm_min_us) + pwm_delta
+                    else:
+                        pwm_us[i] = float(self.cfg.pwm_min_us)
+                # Clamp to limits
+                pwm_us[i] = float(np.clip(pwm_us[i], float(self.cfg.pwm_min_us), float(self.cfg.pwm_max_us)))
+        else:
+            # MotorTableModel lookup table
+            if self.motor_table is None:
+                # Fallback: use Hopper4 method if table not initialized
+                pwm_us = np.zeros(6, dtype=float)
+                for i in range(6):
+                    thrust_i = float(thrust_motor[i])
+                    if thrust_i <= 0.0:
+                        pwm_us[i] = float(self.cfg.pwm_min_us)
+                    else:
+                        k = float(self.prop_k_thrust)
+                        if k > 1e-12:
+                            pwm_delta = float(math.sqrt(thrust_i / k))
+                            pwm_us[i] = float(self.cfg.pwm_min_us) + pwm_delta
+                        else:
+                            pwm_us[i] = float(self.cfg.pwm_min_us)
+                    pwm_us[i] = float(np.clip(pwm_us[i], float(self.cfg.pwm_min_us), float(self.cfg.pwm_max_us)))
+            else:
+                pwm_us = self.motor_table.pwm_from_thrust(thrust_motor).astype(float).reshape(6)
 
         info = {
             "t": float(self.sim_time),

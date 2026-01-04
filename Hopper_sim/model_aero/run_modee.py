@@ -177,6 +177,17 @@ Examples:
         default=None,
         help='Leg kinematics backend: "delta" (real robot) or "serial" (MuJoCo hopper_serial.xml).',
     )
+    ap.add_argument(
+        "--use-hopper4-pwm",
+        action="store_true",
+        help="Use Hopper4-style k_thrust square-root PWM mapping instead of MotorTableModel lookup table.",
+    )
+    ap.add_argument(
+        "--prop-k-thrust",
+        type=float,
+        default=None,
+        help="Hopper4 thrust coefficient k_thrust (N per (pwm_delta)^2). Default: 1.47e-4. Only used when --use-hopper4-pwm is set.",
+    )
 
     # Stance velocity convergence tuning (symmetric XY; user request)
     ap.add_argument(
@@ -269,6 +280,14 @@ Examples:
         modee_cfg.v_int_max = float(args.v_int_max)
         print(f"[run_modee] v_int_max = {modee_cfg.v_int_max}")
     
+    # Propeller PWM mapping method
+    if args.use_hopper4_pwm:
+        modee_cfg.use_hopper4_pwm_mapping = True
+        print("[run_modee] use_hopper4_pwm_mapping = True (Hopper4-style k_thrust)")
+    if args.prop_k_thrust is not None:
+        modee_cfg.prop_k_thrust = float(args.prop_k_thrust)
+        print(f"[run_modee] prop_k_thrust = {modee_cfg.prop_k_thrust:.2e}")
+    
     # Foot velocity LPF (flight phase noise rejection)
     if args.no_foot_vel_lpf:
         modee_cfg.use_foot_vel_lpf = False
@@ -311,6 +330,9 @@ Examples:
     print(f"  - thrust_ratio: {modee_cfg.prop_base_thrust_ratio}")
     print(f"  - thrust_max_each: {modee_cfg.thrust_max_each_n} N/arm")
     print(f"  - thrust_min_each: {modee_cfg.wbc_thrust_min_each_n} N/arm")
+    print(f"  - PWM mapping: {'Hopper4 (k_thrust)' if modee_cfg.use_hopper4_pwm_mapping else 'MotorTableModel (lookup)'}")
+    if modee_cfg.use_hopper4_pwm_mapping:
+        print(f"  - prop_k_thrust: {modee_cfg.prop_k_thrust:.2e}")
     print(f"  - wbc_w_t_ref: {modee_cfg.wbc_w_t_ref}")
     print(f"  - wbc_w_tsum_ref: {modee_cfg.wbc_w_tsum_ref}")
     print(f"  - swing_kp_xy: {modee_cfg.swing_kp_xy}, swing_kd_xy: {modee_cfg.swing_kd_xy} (XY)")
