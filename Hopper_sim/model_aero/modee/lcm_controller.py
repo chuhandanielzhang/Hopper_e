@@ -64,6 +64,7 @@ class ModeELCMConfig:
     # (which breaks stance force/velocity convergence). Do safety limits inside ModeECore via
     # `ModeEConfig.tau_cmd_max_nm` instead.
     tau_out_max_nm: float | None = None
+
     # SAFE flag:
     # - If triggered, we request hopper_driver to enter DAMP (same as pressing B),
     #   and pause the Python controller loop for a few seconds.

@@ -6,9 +6,9 @@ cd "$(dirname "$0")"
 OUT_DIR="$(cd .. && pwd)/videos"
 mkdir -p "$OUT_DIR"
 
-OUT_MP4="$OUT_DIR/modee_task_3s0_5s_fwd_3s0.mp4"
+OUT_MP4="$OUT_DIR/modee_task_3s0_5s_fwd_8s0.mp4"
 
-echo "=== Hopper_sim / model_aero: record ModeE (serial) demo (3s in-place, 5s forward, 3s in-place) ==="
+echo "=== Hopper_sim / model_aero: record ModeE (serial) demo (3s in-place, 5s forward, 8s in-place) ==="
 echo "Output: $OUT_MP4"
 
 # Clean up old processes (best-effort)
@@ -26,16 +26,16 @@ python3 mujoco_lcm_fake_robot.py \
   --q-offset 0 \
   --hold-level-s 3.0 \
   --fake-gamepad \
-  --fake-gamepad-y-once \
+  --fake-gamepad-y-hold-s 2.0 \
   --cmd-vx0 0.0 \
   --cmd-vy0 0.0 \
   --cmd-vx1 0.30 \
   --cmd-vy1 0.0 \
-  --cmd-switch-after-s 6.0 \
+  --cmd-switch-after-s 3.0 \
   --cmd-vx2 0.0 \
   --cmd-vy2 0.0 \
-  --cmd-switch2-after-s 11.0 \
-  --duration-s 14 \
+  --cmd-switch2-after-s 8.0 \
+  --duration-s 19 \
   --record-mp4 "$OUT_MP4" \
   --hud \
   > /tmp/hopper_sim_modee_mj.log 2>&1 &
@@ -47,6 +47,7 @@ sleep 1
 python3 run_modee.py \
   --leg-model serial \
   --tau-out-max 2500 \
+  --hop-peak-z 1 \
   --print-hz 50 \
   > /tmp/hopper_sim_modee_ctl.log 2>&1 &
 CTL_PID=$!

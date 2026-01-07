@@ -214,6 +214,12 @@ Examples:
         default=None,
         help="Horizontal velocity integrator clamp (m/s). Default: 0.30",
     )
+    ap.add_argument(
+        "--hop-peak-z",
+        type=float,
+        default=None,
+        help="Target apex height (m). Default: 0.7",
+    )
 
     args = ap.parse_args()
 
@@ -279,6 +285,9 @@ Examples:
     if args.v_int_max is not None:
         modee_cfg.v_int_max = float(args.v_int_max)
         print(f"[run_modee] v_int_max = {modee_cfg.v_int_max}")
+    if args.hop_peak_z is not None:
+        modee_cfg.hop_peak_z = float(args.hop_peak_z)
+        print(f"[run_modee] hop_peak_z = {modee_cfg.hop_peak_z}")
     
     # Propeller PWM mapping method
     if args.use_hopper4_pwm:

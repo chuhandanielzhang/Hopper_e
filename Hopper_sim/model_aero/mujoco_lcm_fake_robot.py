@@ -366,6 +366,12 @@ def main() -> None:
         action="store_true",
         help="If set, publish gamepad Y=1 for ONE message at startup (rising edge) to trigger ModeE LOG START + user_reset().",
     )
+    ap.add_argument(
+        "--fake-gamepad-y-hold-s",
+        type=float,
+        default=0.0,
+        help="If >0, hold gamepad Y=1 for this many *simulation* seconds (more robust than --fake-gamepad-y-once if the controller starts late).",
+    )
     ap.add_argument("--gamepad-hz", type=float, default=50.0, help="Synthetic gamepad publish rate (Hz).")
     ap.add_argument("--gamepad-max-cmd-vel", type=float, default=0.8, help="Must match run_modee.py --max-cmd-vel.")
     ap.add_argument(
@@ -738,6 +744,7 @@ def main() -> None:
     # Synthetic gamepad publish schedule (relative to release)
     fake_gamepad = bool(getattr(args, "fake_gamepad", False))
     fake_gamepad_y_once = bool(getattr(args, "fake_gamepad_y_once", False))
+    fake_gamepad_y_hold_s = float(max(0.0, float(getattr(args, "fake_gamepad_y_hold_s", 0.0))))
     y_once_sent = False
     gp_hz = float(max(1e-3, float(getattr(args, "gamepad_hz", 50.0))))
     gp_period = 1.0 / gp_hz
@@ -877,7 +884,11 @@ def main() -> None:
             try:
                 gp = gamepad_lcmt()
                 gp.rightStickAnalog = [float(stick_x), float(stick_y)]
-                if bool(fake_gamepad_y_once) and (not bool(y_once_sent)):
+                if fake_gamepad_y_hold_s > 1e-9:
+                    # Hold Y high for a short window so the controller reliably sees the rising edge
+                    # even if it starts after MuJoCo.
+                    gp.y = 1 if float(sim_t) < fake_gamepad_y_hold_s else 0
+                elif bool(fake_gamepad_y_once) and (not bool(y_once_sent)):
                     # Rising edge for one publish is enough for ModeE logging trigger.
                     gp.y = 1
                     y_once_sent = True

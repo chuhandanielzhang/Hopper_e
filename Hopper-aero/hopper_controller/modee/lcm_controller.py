@@ -59,10 +59,6 @@ class ModeELCMConfig:
     tau_out_scale: float = 1.0
     # Default to a conservative output torque cap for bring-up safety.
     # Increase gradually (e.g., 2, 3, 5...) as confidence grows.
-    # IMPORTANT (user request “A”):
-    # Keep output-side torque limiting DISABLED so the controller does not get silently rescaled
-    # (which breaks stance force/velocity convergence). Do safety limits inside ModeECore via
-    # `ModeEConfig.tau_cmd_max_nm` instead.
     tau_out_max_nm: float | None = None
     # SAFE flag:
     # - If triggered, we request hopper_driver to enter DAMP (same as pressing B),
@@ -453,14 +449,12 @@ class ModeELCMController:
             self._log_enabled = True
             self._log_last_flush_t = float(time.time())
             self._log_rows = 0
-            print(f"[modee] LOG START: {path}")
         except Exception as e:
             # Don't kill controller if logging fails.
             self._log_enabled = False
             self._log_fp = None
             self._log_writer = None
             self._log_path = None
-            print(f"[modee] LOG ERROR: {e}")
 
     def _stop_log(self) -> None:
         if self._log_fp is not None:
@@ -472,8 +466,6 @@ class ModeELCMController:
                 self._log_fp.close()
             except Exception:
                 pass
-        if bool(self._log_enabled) and self._log_path is not None:
-            print(f"[modee] LOG STOP: {self._log_path} (rows={self._log_rows})")
         self._log_enabled = False
         self._log_fp = None
         self._log_writer = None
@@ -494,7 +486,6 @@ class ModeELCMController:
             # reset core estimates (user-requested "zero": v, integrators, etc.)
             try:
                 self.core.user_reset()
-                print("[modee] Y: user_reset() (v_hat/integrators zeroed)")
             except Exception:
                 pass
             # User request: also enable velocity hard-hold until we enter STANCE once.
@@ -502,7 +493,6 @@ class ModeELCMController:
             self._y_hold_until_stance = True
             try:
                 self.core.user_zero_velocity_hold(True)
-                print("[modee] Y: zero_velocity_hold = True (latched until STANCE)")
             except Exception:
                 pass
             # restart logging every time Y is pressed
@@ -521,7 +511,6 @@ class ModeELCMController:
         if bool(b_now) and (not bool(self._last_b)):
             if bool(self._log_enabled):
                 self._stop_log()
-                print("[modee] B: LOG STOP (operator switched to DAMP)")
         self._last_b = bool(b_now)
 
     def _handle_zero_vel_trigger(self, gamepad_msg) -> None:
@@ -545,8 +534,6 @@ class ModeELCMController:
                 self.core.user_zero_velocity_hold(bool(self._zero_vel_hold))
             except Exception:
                 pass
-            state = "ON" if bool(self._zero_vel_hold) else "OFF"
-            print(f"[modee] POINT(I): zero-velocity HOLD {state} (v_hat forced to 0; desired_v forced to 0)")
 
         self._last_point = bool(point_now)
 
@@ -769,8 +756,6 @@ class ModeELCMController:
                 if (not have_motor) or (not have_imu):
                     # Wait for first packets
                     if (now - last_print) > 1.0:
-                        have_gamepad = gamepad_msg is not None
-                        print(f"[modee] waiting... have_motor={have_motor} have_imu={have_imu} have_gamepad={have_gamepad}")
                         last_print = now
                     continue
 
@@ -803,7 +788,6 @@ class ModeELCMController:
                     if unsafe_q:
                         reason.append(f"q_out q=[{q[0]:+.3f},{q[1]:+.3f},{q[2]:+.3f}] (lim [{q_min:+.2f},{q_max:+.2f}])")
                     pause_s = float(max(0.0, float(self.lcm_cfg.safe_pause_s)))
-                    print(f"[modee] SAFE TRIGGER ({' | '.join(reason)}). Forcing DAMP + pause {pause_s:.1f}s")
 
                     # Stop logging on SAFE (treat as end of experiment segment)
                     if bool(self._log_enabled):
@@ -836,6 +820,12 @@ class ModeELCMController:
                     desired_v_xy_w=desired_v_xy,
                 )
 
+                # Print robot velocity (world frame) and foot velocity (body frame)
+                v_hat_w = np.asarray(info.get("v_hat_w", np.zeros(3)), dtype=float).reshape(3)
+                foot_vrel_b = np.asarray(info.get("foot_vrel_b", np.zeros(3)), dtype=float).reshape(3)
+                print(f"v_hat_w (world): [{v_hat_w[0]:+.4f}, {v_hat_w[1]:+.4f}, {v_hat_w[2]:+.4f}] m/s | "
+                      f"foot_vrel_b (body): [{foot_vrel_b[0]:+.4f}, {foot_vrel_b[1]:+.4f}, {foot_vrel_b[2]:+.4f}] m/s")
+
                 tau_send, tau_out_scale_applied = self._apply_tau_output_limit(tau_raw)
                 # Optional AK60-side damping in FLIGHT only (helps reduce oscillation without affecting takeoff).
                 # We keep kp=0 and qd_des=0, so this acts like: tau += -kd * qd_motor (in motor frame).
@@ -851,7 +841,6 @@ class ModeELCMController:
                             self.core.user_zero_velocity_hold(False)
                         except Exception:
                             pass
-                    print("[modee] Y-hold released (entered STANCE)")
                 kd_use = float(kd_stance if in_stance else kd_flight)
                 if kd_use > 0.0:
                     self._publish_hopper_cmd(
@@ -880,53 +869,6 @@ class ModeELCMController:
                     info=dict(info),
                 )
 
-                # Print at configured rate
-                print_hz = float(self.lcm_cfg.print_hz)
-                if print_hz > 0.0:
-                    if (now - last_print) < (1.0 / float(max(1e-6, print_hz))):
-                        continue
-                    last_print = now
-
-                try:
-                    # Phase
-                    phase = "STANCE" if int(info.get("stance", 0)) else "FLIGHT"
-                    if int(info.get("stance", 0)) and int(info.get("compress", 0)):
-                        phase = "STANCE:COMP"
-                    elif int(info.get("stance", 0)):
-                        phase = "STANCE:PUSH"
-
-                    # Foot position (body frame)
-                    foot_b = np.asarray(info.get("foot_b", [0.0, 0.0, 0.0]), dtype=float).reshape(3)
-
-                    # Forces:
-                    # - f_grf_w: ground reaction force (ground -> robot) in WORLD frame (+Z up)
-                    # - f_leg_w: leg push force (robot -> ground) in WORLD frame (+Z up) = -f_grf_w
-                    # - f_prop_w: prop thrust force on robot in WORLD frame (assumed along body +Z, so world dir is z_w)
-                    # - f_tot_w: sum of the above (external support force on robot; does not include gravity)
-                    f_grf_w = np.asarray(info.get("f_contact_w", [0.0, 0.0, 0.0]), dtype=float).reshape(3)
-                    f_leg_w = (-f_grf_w).astype(float)
-                    thrusts_arm = np.asarray(info.get("thrusts_arm", [0.0, 0.0, 0.0]), dtype=float).reshape(3)
-                    thrust_sum = float(np.sum(thrusts_arm))
-                    q_hat_wxyz = np.asarray(info.get("q_hat_wxyz", [1.0, 0.0, 0.0, 0.0]), dtype=float).reshape(4)
-                    R_wb = _quat_wxyz_to_R_wb(q_hat_wxyz)
-                    z_w = np.asarray(R_wb[:, 2], dtype=float).reshape(3)
-                    f_prop_w = (z_w * thrust_sum).astype(float)
-                    f_tot_w = (f_grf_w + f_prop_w).astype(float)
-
-                    tau = np.asarray(tau_send, dtype=float).reshape(3)
-                    pwm = np.asarray(pwm_us, dtype=float).reshape(6)
-                    print(
-                        f"[modee] {phase} | "
-                        f"pos=[{foot_b[0]:+.3f},{foot_b[1]:+.3f},{foot_b[2]:+.3f}]m | "
-                        f"f_tot=[{f_tot_w[0]:+.2f},{f_tot_w[1]:+.2f},{f_tot_w[2]:+.2f}]N(w) | "
-                        f"f_grf=[{f_grf_w[0]:+.2f},{f_grf_w[1]:+.2f},{f_grf_w[2]:+.2f}]N(w) | "
-                        f"f_leg=[{f_leg_w[0]:+.2f},{f_leg_w[1]:+.2f},{f_leg_w[2]:+.2f}]N(w) | "
-                        f"f_prop=[{f_prop_w[0]:+.2f},{f_prop_w[1]:+.2f},{f_prop_w[2]:+.2f}]N(w) | "
-                        f"tau=[{tau[0]:+.2f},{tau[1]:+.2f},{tau[2]:+.2f}]Nm | "
-                        f"pwm=[{pwm[0]:.0f},{pwm[1]:.0f},{pwm[2]:.0f},{pwm[3]:.0f},{pwm[4]:.0f},{pwm[5]:.0f}]us"
-                    )
-                except Exception:
-                    pass
         finally:
             # Ensure file is closed when controller stops
             self._stop_log()
