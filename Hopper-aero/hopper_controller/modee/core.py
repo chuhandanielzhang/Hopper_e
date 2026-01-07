@@ -424,7 +424,7 @@ class ModeEConfig:
     # ===== STANCE VXY reference behavior =====
     # If True: track desired_v_xy_w for the entire stance (strong velocity convergence from touchdown).
     # If False: "soft landing" blending - early stance keeps current vel_hat, late stance tracks desired.
-    stance_vxy_track_from_td: bool = True
+    stance_vxy_track_from_td: bool = False
 
     # ===== STANCE velocity measurement conditioning (leg-kinematics) =====
     # The leg-kinematics base-velocity measurement can be spiky during fast PUSH (qd noise / conditioning).
