@@ -313,7 +313,7 @@ class ModeEConfig:
     swing_kp_xy: float = 40.0   # Perpendicular position gain (N/m)
     swing_kd_xy: float = 2.0    # Perpendicular damping gain (N/(m/s))
     swing_kp_z: float = 1000.0  # Axial (virtual spring) stiffness (N/m), along leg direction
-    swing_kd_z: float = 10.0    # Axial damping (N/(m/s)), along leg direction
+    swing_kd_z: float = 15.0    # Axial damping (N/(m/s)), along leg direction
 
     # Foot velocity low-pass filter (flight phase only, noise rejection for high kd)
     # When kd > 3, foot velocity noise (from motor encoder differentiation + Jacobian propagation)
@@ -425,6 +425,13 @@ class ModeEConfig:
     # If True: track desired_v_xy_w for the entire stance (strong velocity convergence from touchdown).
     # If False: "soft landing" blending - early stance keeps current vel_hat, late stance tracks desired.
     stance_vxy_track_from_td: bool = True
+
+    # ===== STANCE velocity measurement conditioning (leg-kinematics) =====
+    # The leg-kinematics base-velocity measurement can be spiky during fast PUSH (qd noise / conditioning).
+    # With strong stance VXY tracking, these spikes can destabilize the controller.
+    # We therefore add a simple LPF + outlier reject on v_meas_foot_w used for fusion.
+    stance_v_meas_lpf_tau: float = 0.03     # seconds; 0 disables LPF
+    stance_v_meas_xy_abs_max: float = 6.0   # m/s; reject if ||v_meas_xy|| exceeds this
 
     # Slip detection reference speed (m/s) for velocity fusion gating.
     # When foot velocity prediction exceeds this value, fusion weight is reduced.
@@ -579,6 +586,9 @@ class ModeECore:
         # Foot velocity LPF state (flight phase only)
         self._foot_vrel_lpf = np.zeros(3, dtype=float)
         self._foot_vrel_lpf_init = False
+        # Stance velocity measurement LPF (leg-kinematics v_meas)
+        self._v_meas_w_lpf = np.zeros(3, dtype=float)
+        self._v_meas_w_lpf_init = False
 
         # MPC + WBC
         self.mpc = _make_mpc(cfg)
@@ -722,6 +732,8 @@ class ModeECore:
         self._v_hat_w[:] = 0.0
         self._foot_vrel_lpf[:] = 0.0
         self._foot_vrel_lpf_init = False
+        self._v_meas_w_lpf[:] = 0.0
+        self._v_meas_w_lpf_init = False
         self._v_hat_inited = False
         self._v_int_xy[:] = 0.0
         self._z_hat_contact_filt = None
@@ -1382,6 +1394,34 @@ class ModeECore:
                 # Decay integrator in this case (prevents windup on NaNs)
                 self._v_int_xy = (0.995 * self._v_int_xy).astype(float)
             else:
+                # Condition measurement (outlier reject + LPF) before fusion.
+                gate_meas = 1.0
+                try:
+                    vxy_abs_max = float(max(0.0, float(getattr(self.cfg, "stance_v_meas_xy_abs_max", 0.0))))
+                    if vxy_abs_max > 1e-9:
+                        vxy_norm = float(np.linalg.norm(np.asarray(v_meas_w[0:2], dtype=float).reshape(2)))
+                        if (not np.isfinite(vxy_norm)) or (vxy_norm > vxy_abs_max):
+                            gate_meas = 0.0
+                except Exception:
+                    gate_meas = 1.0
+
+                if gate_meas > 0.0:
+                    try:
+                        tau_m = float(max(0.0, float(getattr(self.cfg, "stance_v_meas_lpf_tau", 0.0))))
+                        if tau_m > 1e-9:
+                            a_m = float(np.clip(float(self.dt) / (tau_m + float(self.dt)), 0.0, 1.0))
+                            if not bool(self._v_meas_w_lpf_init):
+                                self._v_meas_w_lpf = np.asarray(v_meas_w, dtype=float).reshape(3).copy()
+                                self._v_meas_w_lpf_init = True
+                            self._v_meas_w_lpf = ((1.0 - a_m) * self._v_meas_w_lpf + a_m * np.asarray(v_meas_w, dtype=float).reshape(3)).astype(float)
+                            v_meas_w = np.asarray(self._v_meas_w_lpf, dtype=float).reshape(3).copy()
+                            # Keep logged v_meas_foot_w consistent with what we actually fuse.
+                            try:
+                                v_base_from_foot_w = v_meas_w.copy()
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
 
                 # Slip detection (optional, disabled by default to match Hopper4 behavior)
                 if bool(getattr(self.cfg, "v_use_slip_detection", False)):
@@ -1396,6 +1436,8 @@ class ModeECore:
                 else:
                     # No slip detection: always trust leg kinematics (like Hopper4)
                     gate = 1.0
+                # Also apply measurement gating (outlier reject)
+                gate = float(gate) * float(gate_meas)
 
                 tau = float(self._v_hat_lpf_tau)
                 a = float(np.clip(float(self.dt) / (tau + float(self.dt)), 0.0, 1.0)) if tau > 1e-9 else 1.0
