@@ -421,6 +421,11 @@ class ModeEConfig:
     # (Kept name for backward-compat.)
     v_fuse_vx_scale: float = 1.0
 
+    # ===== STANCE VXY reference behavior =====
+    # If True: track desired_v_xy_w for the entire stance (strong velocity convergence from touchdown).
+    # If False: "soft landing" blending - early stance keeps current vel_hat, late stance tracks desired.
+    stance_vxy_track_from_td: bool = True
+
     # Slip detection reference speed (m/s) for velocity fusion gating.
     # When foot velocity prediction exceeds this value, fusion weight is reduced.
     # Default 1.0 m/s is conservative; increase to 3.0-5.0 if leg retraction during
@@ -440,7 +445,7 @@ class ModeEConfig:
 
     # MPC
     mpc_dt: float = 0.02
-    mpc_N: int = 3
+    mpc_N: int = 12
     # Expose a few MPC knobs for soft-landing / balance coupling experiments
     # For real-robot hopping, allowing MPC to choose fz < mg often causes an unintended "brake"
     # during early push/rebound. Set a conservative default >= mg; tune with care for your hardware.
@@ -452,7 +457,8 @@ class ModeEConfig:
 
     # PWM limits
     pwm_min_us: float = 1000.0
-    pwm_max_us: float = 1300.0
+    # User confirmed: props can go up to 1500us.
+    pwm_max_us: float = 1500.0
 
     # ===== Propeller PWM mapping method =====
     # If True: use Hopper4-style k_thrust square-root relationship (pwm = 1000 + sqrt(thrust / k_thrust))
@@ -473,10 +479,10 @@ class ModeEConfig:
     # kR: attitude error gain (proportional, larger = stiffer response)
     # kW: angular velocity damping gain (derivative, larger = more damping/braking)
     # tau_rp_max: maximum desired roll/pitch torque (Nm)  pitchdebug
-    flight_kR_roll: float = 25.0
-    flight_kW_roll: float = 25.0
-    flight_kR_pitch: float = 25.0
-    flight_kW_pitch: float = 25.0
+    flight_kR_roll: float = 50.0
+    flight_kW_roll: float = 50.0
+    flight_kR_pitch: float = 50.0
+    flight_kW_pitch: float = 50.0
     flight_tau_rp_max: float = 130.0
 
 
@@ -1690,7 +1696,9 @@ class ModeECore:
 
                 # Unified stance reference:
                 # - pz_ref/vz_ref come from a single smooth stance profile (soft-landing -> push-off)
-                # - vx/vy are blended: early stance keeps current velocity (soft landing), late stance tracks command.
+                # - vx/vy are either:
+                #   - strong tracking from touchdown (if stance_vxy_track_from_td=True), OR
+                #   - soft-landing blend: early stance keeps current velocity, late stance tracks command.
                 t0 = float(t_in_stance)
                 t_comp = float(self._stance_t_comp) if (self._stance_t_comp is not None) else 0.0
                 denom_vxy = float(max(1e-6, float(self.cfg.stance_T) - t_comp))
@@ -1703,9 +1711,15 @@ class ModeECore:
                         pz_ref = float(pos_com_hat[2])
                         vz_ref = float(vel_hat[2])
 
-                    wv = self._smoothstep01((tk - t_comp) / denom_vxy)
-                    vx_ref = float((1.0 - wv) * float(vel_hat[0]) + wv * float(desired_v_xy_w[0]))
-                    vy_ref = float((1.0 - wv) * float(vel_hat[1]) + wv * float(desired_v_xy_w[1]))
+                    if bool(getattr(self.cfg, "stance_vxy_track_from_td", True)):
+                        # Strong velocity convergence throughout stance.
+                        vx_ref = float(desired_v_xy_w[0])
+                        vy_ref = float(desired_v_xy_w[1])
+                    else:
+                        # Soft landing: blend from current velocity to desired command after max-compression.
+                        wv = self._smoothstep01((tk - t_comp) / denom_vxy)
+                        vx_ref = float((1.0 - wv) * float(vel_hat[0]) + wv * float(desired_v_xy_w[0]))
+                        vy_ref = float((1.0 - wv) * float(vel_hat[1]) + wv * float(desired_v_xy_w[1]))
 
                     x_ref_seq[k, :] = np.array(
                         [

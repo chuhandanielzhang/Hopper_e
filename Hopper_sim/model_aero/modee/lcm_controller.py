@@ -59,7 +59,11 @@ class ModeELCMConfig:
     tau_out_scale: float = 1.0
     # Default to a conservative output torque cap for bring-up safety.
     # Increase gradually (e.g., 2, 3, 5...) as confidence grows.
-    tau_out_max_nm: float | None = 10.0
+    # IMPORTANT (user request “A”):
+    # Keep output-side torque limiting DISABLED so the controller does not get silently rescaled
+    # (which breaks stance force/velocity convergence). Do safety limits inside ModeECore via
+    # `ModeEConfig.tau_cmd_max_nm` instead.
+    tau_out_max_nm: float | None = None
     # SAFE flag:
     # - If triggered, we request hopper_driver to enter DAMP (same as pressing B),
     #   and pause the Python controller loop for a few seconds.
