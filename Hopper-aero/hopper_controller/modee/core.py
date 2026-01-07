@@ -400,7 +400,7 @@ class ModeEConfig:
     # This parameter is used by BOTH:
     # - condensed wrench MPC (friction cone)
     # - WBC-QP (friction pyramid / cone approximation)
-    mu: float = 0.8
+    mu: float = 0.3
 
     # ===== Leg kinematics backend =====
     # - "delta": real-robot 3-RSR delta motor angles (uses `forward_kinematics.py`)
@@ -421,8 +421,22 @@ class ModeEConfig:
     # (Kept name for backward-compat.)
     v_fuse_vx_scale: float = 1.0
 
+    # Slip detection reference speed (m/s) for velocity fusion gating.
+    # When foot velocity prediction exceeds this value, fusion weight is reduced.
+    # Default 1.0 m/s is conservative; increase to 3.0-5.0 if leg retraction during
+    # STANCE:PUSH causes false slip detection (preventing velocity fusion).
+    # Set to a very large value (e.g., 100.0) to effectively disable slip detection
+    # and use direct leg kinematics like Hopper4.
+    v_slip_ref: float = 3.0
+    
+    # Enable slip detection gating for velocity fusion.
+    # If False, always use leg kinematics measurement (like Hopper4, no gating).
+    # If True, use slip detection to reduce fusion weight when foot velocity is large.
+    v_use_slip_detection: bool = False
+
     # MPC velocity tracking weight (applied symmetrically to vx and vy).
-    mpc_w_vxy: float = 5.0  # increased for faster velocity tracking
+    # IMPORTANT: this is a cost weight and must be >= 0 (negative would make the optimization ill-posed).
+    mpc_w_vxy: float = 5.0
 
     # MPC
     mpc_dt: float = 0.02
@@ -448,7 +462,8 @@ class ModeEConfig:
     # Default from Hopper4: k_thrust = 1.47e-4
     # Formula: thrust = k_thrust * (pwm - 1000)^2
     # Inverse: pwm = 1000 + sqrt(thrust / k_thrust)
-    prop_k_thrust: float = 1.47e-5
+    # NOTE: 1.47e-5 makes even ~5N/arm saturate at pwm_max=1300 (sqrt mapping), starving attitude torque.
+    prop_k_thrust: float = 1.47e-4
 
     # Use FC quaternion directly (recommended for real robot) vs. re-estimate from gyro+acc
     use_fc_quat: bool = True
@@ -1362,14 +1377,19 @@ class ModeECore:
                 self._v_int_xy = (0.995 * self._v_int_xy).astype(float)
             else:
 
-                omega_w_hat = (R_wb_hat @ imu_gyro_b.reshape(3)).reshape(3)
-                omega_noyaw = omega_w_hat.copy()
-                omega_noyaw[2] = 0.0
-                r_foot_w_rel = (R_wb_hat @ foot_b.reshape(3)).reshape(3)
-                v_foot_w_pred = (v_pred + np.cross(omega_noyaw, r_foot_w_rel) + (R_wb_hat @ foot_vrel_b.reshape(3))).reshape(3)
-                slip_speed = float(np.linalg.norm(v_foot_w_pred))
-                slip_ref = 1.0
-                gate = float(np.clip(np.exp(-slip_speed / max(1e-6, slip_ref)), 0.20, 1.0))
+                # Slip detection (optional, disabled by default to match Hopper4 behavior)
+                if bool(getattr(self.cfg, "v_use_slip_detection", False)):
+                    omega_w_hat = (R_wb_hat @ imu_gyro_b.reshape(3)).reshape(3)
+                    omega_noyaw = omega_w_hat.copy()
+                    omega_noyaw[2] = 0.0
+                    r_foot_w_rel = (R_wb_hat @ foot_b.reshape(3)).reshape(3)
+                    v_foot_w_pred = (v_pred + np.cross(omega_noyaw, r_foot_w_rel) + (R_wb_hat @ foot_vrel_b.reshape(3))).reshape(3)
+                    slip_speed = float(np.linalg.norm(v_foot_w_pred))
+                    slip_ref = float(max(0.1, float(self.cfg.v_slip_ref)))
+                    gate = float(np.clip(np.exp(-slip_speed / max(1e-6, slip_ref)), 0.20, 1.0))
+                else:
+                    # No slip detection: always trust leg kinematics (like Hopper4)
+                    gate = 1.0
 
                 tau = float(self._v_hat_lpf_tau)
                 a = float(np.clip(float(self.dt) / (tau + float(self.dt)), 0.0, 1.0)) if tau > 1e-9 else 1.0
